@@ -191,8 +191,8 @@
                         <i class="fas fa-users text-2xl text-blue-600"></i>
                         <span class="text-xs text-blue-600 font-medium">+12%</span>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800">254</h3>
-                    <p class="text-sm text-gray-600">Total Interns</p>
+                    <h3 id="kpiTotalUsers" class="text-2xl font-bold text-gray-800">0</h3>
+                    <p class="text-sm text-gray-600">Total Users</p>
                 </div>
                 
                 <div class="bg-purple-50 border border-purple-200 rounded-lg p-5">
@@ -227,7 +227,7 @@
                         <i class="fas fa-chart-line text-2xl text-red-600"></i>
                         <span class="text-xs text-red-600 font-medium">Today</span>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800">37</h3>
+                    <h3 id="kpiActiveUsers" class="text-2xl font-bold text-gray-800">0</h3>
                     <p class="text-sm text-gray-600">Active Users</p>
                 </div>
             </div>
@@ -235,28 +235,28 @@
             <!-- Analytics Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div class="bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 User Growth Over Time</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">User Growth Over Time</h3>
                     <div class="chart-container">
                         <canvas id="userGrowthChart"></canvas>
                     </div>
                 </div>
                 
                 <div class="bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🧠 Exam Performance</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Exam Performance</h3>
                     <div class="chart-container">
                         <canvas id="examPerformanceChart"></canvas>
                     </div>
                 </div>
                 
                 <div class="bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">💻 Departmental Performance</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Departmental Performance</h3>
                     <div class="chart-container">
                         <canvas id="departmentChart"></canvas>
                     </div>
                 </div>
                 
                 <div class="bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🕐 Login Activity Heatmap</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Login Activity Heatmap</h3>
                     <div class="chart-container">
                         <canvas id="activityChart"></canvas>
                     </div>
@@ -266,7 +266,7 @@
             <!-- Recent Activity & Top Performers -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div class="bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">📜 Recent Intern Logins</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Intern Logins</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full table-responsive" id="recentLoginsTable">
                             <thead>
@@ -283,7 +283,7 @@
                 </div>
                 
                 <div class="bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🏆 Top Performers</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Performers</h3>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                             <div class="flex items-center space-x-3">
@@ -295,7 +295,7 @@
                             </div>
                             <div class="text-right">
                                 <p class="font-bold text-gray-900">94%</p>
-                                <span class="text-xs text-green-600">✅ Certified</span>
+                                <span class="text-xs text-green-600">Certified</span>
                             </div>
                         </div>
                         
@@ -309,7 +309,7 @@
                             </div>
                             <div class="text-right">
                                 <p class="font-bold text-gray-900">91%</p>
-                                <span class="text-xs text-green-600">✅ Certified</span>
+                                <span class="text-xs text-green-600">Certified</span>
                             </div>
                         </div>
                         
@@ -323,7 +323,7 @@
                             </div>
                             <div class="text-right">
                                 <p class="font-bold text-gray-900">89%</p>
-                                <span class="text-xs text-yellow-600">🕒 Pending</span>
+                                <span class="text-xs text-yellow-600">Pending</span>
                             </div>
                         </div>
                     </div>
@@ -333,11 +333,11 @@
             <!-- Examination Insights & Quick Actions -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 <div class="lg:col-span-2 bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🧩 Examination Insights</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Examination Insights</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm text-gray-600">🧮 Average Score</span>
+                                <span class="text-sm text-gray-600">Average Score</span>
                                 <i class="fas fa-chart-line text-blue-600"></i>
                             </div>
                             <p class="text-2xl font-bold text-gray-900">78%</p>
@@ -348,7 +348,7 @@
                         
                         <div class="p-4 bg-green-50 rounded-lg border border-green-200">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm text-gray-600">📈 Top Department</span>
+                                <span class="text-sm text-gray-600">Top Department</span>
                                 <i class="fas fa-trophy text-green-600"></i>
                             </div>
                             <p class="text-xl font-bold text-gray-900">Frontend</p>
@@ -357,7 +357,7 @@
                         
                         <div class="p-4 bg-red-50 rounded-lg border border-red-200">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm text-gray-600">🧠 Hardest Subject</span>
+                                <span class="text-sm text-gray-600">Hardest Subject</span>
                                 <i class="fas fa-exclamation-triangle text-red-600"></i>
                             </div>
                             <p class="text-sm font-bold text-gray-900">Database Management</p>
@@ -366,7 +366,7 @@
                         
                         <div class="p-4 bg-purple-50 rounded-lg border border-purple-200">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm text-gray-600">🕒 Upcoming Exam</span>
+                                <span class="text-sm text-gray-600">Upcoming Exam</span>
                                 <i class="fas fa-calendar text-purple-600"></i>
                             </div>
                             <p class="text-sm font-bold text-gray-900">Business Dev</p>
@@ -376,7 +376,7 @@
                 </div>
                 
                 <div class="bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">⚡ Quick Actions</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4"> Quick Actions</h3>
                     <div class="space-y-3">
                         <button class="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors">
                             <div class="flex items-center space-x-3">
@@ -463,6 +463,41 @@
                     localStorage.removeItem('interns_session');
                     window.location.href = '../../login.html';
                 });
+            }
+        });
+        
+        // KPI: populate Total Users from localStorage
+        function getUsers(){
+            try { return JSON.parse(localStorage.getItem('interns_users') || '[]'); } catch { return []; }
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            const el = document.getElementById('kpiTotalUsers');
+            if (el) {
+                const users = getUsers();
+                el.textContent = users.length.toString();
+            }
+        });
+
+        // KPI: Active Users today (unique userIds with a login today)
+        function countActiveUsersToday(){
+            const logs = readLoginLogs();
+            const today = new Date();
+            const y = today.getFullYear(), m = today.getMonth(), d = today.getDate();
+            const start = new Date(y, m, d, 0, 0, 0, 0).getTime();
+            const end = new Date(y, m, d, 23, 59, 59, 999).getTime();
+            const unique = new Set();
+            for (const log of logs) {
+                const t = new Date(log.loginAt).getTime();
+                if (!isNaN(t) && t >= start && t <= end) {
+                    if (log.userId) unique.add(log.userId);
+                }
+            }
+            return unique.size;
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            const el = document.getElementById('kpiActiveUsers');
+            if (el) {
+                el.textContent = countActiveUsersToday().toString();
             }
         });
         // Mobile menu
@@ -575,23 +610,47 @@
             });
         }
         
+        // Build login heatmap (Morning/Afternoon/Evening per weekday) from stored logs
+        function computeLoginHeatmap(){
+            const logs = readLoginLogs();
+            const morning = [0,0,0,0,0,0,0];
+            const afternoon = [0,0,0,0,0,0,0];
+            const evening = [0,0,0,0,0,0,0];
+            for (const log of logs) {
+                const d = new Date(log.loginAt);
+                if (isNaN(d.getTime())) continue;
+                const jsDay = d.getDay(); // 0=Sun..6=Sat
+                const idx = jsDay === 0 ? 6 : jsDay - 1; // map to Mon..Sun index
+                const hour = d.getHours();
+                if (hour >= 5 && hour <= 11) {
+                    morning[idx]++;
+                } else if (hour >= 12 && hour <= 17) {
+                    afternoon[idx]++;
+                } else {
+                    evening[idx]++;
+                }
+            }
+            return { morning, afternoon, evening };
+        }
+
         const ctx4 = document.getElementById('activityChart');
         if (ctx4) {
+            const heatmap = computeLoginHeatmap();
             new Chart(ctx4, {
                 type: 'bar',
                 data: {
                     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                     datasets: [{
                         label: 'Morning',
-                        data: [12, 15, 18, 20, 22, 8, 5],
+                        data: heatmap.morning,
                         backgroundColor: '#FBBF24'
                     }, {
                         label: 'Afternoon',
-                        data: [25, 28, 32, 30, 35, 15, 10],
+                        data: heatmap.afternoon,
                         backgroundColor: '#5B7FFF'
                     }, {
                         label: 'Evening',
-                        data: [18, 20, 22, 25, 28, 12, 8],
+                        data: heatmap.evening,
                         backgroundColor: '#9A8CFF'
                     }]
                 },
@@ -600,7 +659,7 @@
                     maintainAspectRatio: false,
                     scales: {
                         x: { stacked: true },
-                        y: { stacked: true }
+                        y: { stacked: true, beginAtZero: true, precision: 0 }
                     },
                     plugins: { legend: { position: 'bottom' } }
                 }
