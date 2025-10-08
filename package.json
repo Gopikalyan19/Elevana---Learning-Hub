@@ -1,0 +1,11 @@
+{
+  "name": "interns-examination",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static client-side app for InternsHub: signup → login → dashboard (localStorage)",
+  "scripts": {
+    "start": "echo Open index.html or signup.html in your browser",
+    "format": "echo No formatter configured for static project"
+  }
+}
+

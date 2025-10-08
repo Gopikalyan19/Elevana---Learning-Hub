@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elevana - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        .kpi-card {
+            transition: all 0.3s ease;
+        }
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        @media (max-width: 640px) {
+            .table-responsive {
+                font-size: 12px;
+            }
+            .table-responsive td, .table-responsive th {
+                padding: 8px 4px !important;
+            }
+        }
+    </style>
+    <script>
+        // Admin-only guard using localStorage session created by login page
+        function getSession(){
+            try { return JSON.parse(localStorage.getItem('interns_session') || 'null'); } catch { return null; }
+        }
+        (function enforceAdmin(){
+            const session = getSession();
+            if (!session || session.userId !== 'admin') {
+                window.location.href = '../../login.html';
+            }
+        })();
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div id="mobileMenuOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden"></div>
+    
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30 lg:left-64">
+        <div class="flex items-center justify-between px-3 sm:px-4 py-3">
+            <div class="flex items-center flex-1 space-x-3">
+                <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-md hover:bg-gray-100">
+                    <i class="fas fa-bars text-gray-700"></i>
+                </button>
+                
+                <div class="lg:hidden flex items-center">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-2">
+                        <span class="text-white font-bold text-xs sm:text-sm">E</span>
+                    </div>
+                    <span class="font-semibold text-gray-900 text-sm sm:text-base">Elevana</span>
+                </div>
+                
+                <div class="hidden lg:flex flex-1 max-w-md">
+                    <div class="relative w-full">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400 text-sm"></i>
+                        </div>
+                        <input type="text" 
+                               placeholder="Search interns, courses, exams..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <button class="lg:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-md">
+                    <i class="fas fa-search text-sm"></i>
+                </button>
+                
+                <div class="relative">
+                    <button id="notificationBtn" class="relative p-2 text-gray-700 hover:bg-gray-100 rounded-md">
+                        <i class="fas fa-bell text-sm"></i>
+                        <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                </div>
+                
+                <div class="relative">
+                    <button id="profileBtn" class="flex items-center space-x-1 sm:space-x-2 cursor-pointer hover:bg-gray-100 rounded-lg p-1">
+                        <div class="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span class="text-xs sm:text-sm font-medium text-white">A</span>
+                        </div>
+                        <span class="hidden sm:block text-xs sm:text-sm font-medium text-gray-900">Admin</span>
+                        <i class="fas fa-chevron-down text-xs text-gray-700"></i>
+                    </button>
+                    
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                        <div class="p-3 border-b border-gray-200">
+                            <p class="text-sm font-semibold text-gray-900">Admin User</p>
+                            <p class="text-xs text-gray-500">Administrator</p>
+                        </div>
+                        <div class="py-2">
+                            <a href="#" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-user w-4 text-center mr-3"></i>
+                                View Profile
+                            </a>
+                            <a href="#" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-cog w-4 text-center mr-3"></i>
+                                Settings
+                            </a>
+                            <hr class="my-2">
+                            <a id="adminLogout" href="#" class="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50">
+                                <i class="fas fa-sign-out-alt w-4 text-center mr-3"></i>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-white border-r border-gray-200 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div class="flex items-center px-6 py-4 border-b border-gray-200">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                <span class="text-white font-bold text-sm">E</span>
+            </div>
+            <span class="font-semibold text-gray-900 text-lg">Elevana</span>
+        </div>
+        
+        <nav class="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar">
+            <ul class="space-y-2">
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 text-gray-900 bg-gray-100 rounded-lg font-medium">
+                        <i class="fas fa-th-large w-5 text-center mr-3"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-users w-5 text-center mr-3"></i>
+                        Intern Management
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-book-open w-5 text-center mr-3"></i>
+                        Courses
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-clipboard-list w-5 text-center mr-3"></i>
+                        Exams
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-chart-bar w-5 text-center mr-3"></i>
+                        Results
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-award w-5 text-center mr-3"></i>
+                        Certificates
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="lg:ml-64 pt-16 min-h-screen bg-gray-50">
+        <div class="p-4 sm:p-6 lg:p-8">
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <i class="fas fa-users text-2xl text-blue-600"></i>
+                        <span class="text-xs text-blue-600 font-medium">+12%</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800">254</h3>
+                    <p class="text-sm text-gray-600">Total Interns</p>
+                </div>
+                
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <i class="fas fa-book-open text-2xl text-purple-600"></i>
+                        <span class="text-xs text-purple-600 font-medium">Active</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800">12</h3>
+                    <p class="text-sm text-gray-600">Active Courses</p>
+                </div>
+                
+                <div class="bg-green-50 border border-green-200 rounded-lg p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <i class="fas fa-clipboard-list text-2xl text-green-600"></i>
+                        <span class="text-xs text-green-600 font-medium">This Month</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800">8</h3>
+                    <p class="text-sm text-gray-600">Exams Conducted</p>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <i class="fas fa-award text-2xl text-yellow-600"></i>
+                        <span class="text-xs text-yellow-600 font-medium">+8</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800">65</h3>
+                    <p class="text-sm text-gray-600">Certificates Issued</p>
+                </div>
+                
+                <div class="bg-red-50 border border-red-200 rounded-lg p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <i class="fas fa-chart-line text-2xl text-red-600"></i>
+                        <span class="text-xs text-red-600 font-medium">Today</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800">37</h3>
+                    <p class="text-sm text-gray-600">Active Users</p>
+                </div>
+            </div>
+            
+            <!-- Analytics Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 User Growth Over Time</h3>
+                    <div class="chart-container">
+                        <canvas id="userGrowthChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🧠 Exam Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="examPerformanceChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">💻 Departmental Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="departmentChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🕐 Login Activity Heatmap</h3>
+                    <div class="chart-container">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity & Top Performers -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">📜 Recent Intern Logins</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-responsive" id="recentLoginsTable">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left text-xs font-semibold text-gray-600 py-3 px-2">Name</th>
+                                    <th class="text-left text-xs font-semibold text-gray-600 py-3 px-2">Email</th>
+                                    <th class="text-left text-xs font-semibold text-gray-600 py-3 px-2">Role</th>
+                                    <th class="text-left text-xs font-semibold text-gray-600 py-3 px-2">Login Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentLoginsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🏆 Top Performers</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">🥇</span>
+                                <div>
+                                    <p class="font-semibold text-gray-900">Riya Kapoor</p>
+                                    <p class="text-xs text-gray-600">Frontend</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-gray-900">94%</p>
+                                <span class="text-xs text-green-600">✅ Certified</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">🥈</span>
+                                <div>
+                                    <p class="font-semibold text-gray-900">Dev Patel</p>
+                                    <p class="text-xs text-gray-600">Backend</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-gray-900">91%</p>
+                                <span class="text-xs text-green-600">✅ Certified</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">🥉</span>
+                                <div>
+                                    <p class="font-semibold text-gray-900">Aanya Sharma</p>
+                                    <p class="text-xs text-gray-600">HR</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-gray-900">89%</p>
+                                <span class="text-xs text-yellow-600">🕒 Pending</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Examination Insights & Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="lg:col-span-2 bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🧩 Examination Insights</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">🧮 Average Score</span>
+                                <i class="fas fa-chart-line text-blue-600"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900">78%</p>
+                            <div class="w-full bg-blue-200 rounded-full h-2 mt-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 78%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">📈 Top Department</span>
+                                <i class="fas fa-trophy text-green-600"></i>
+                            </div>
+                            <p class="text-xl font-bold text-gray-900">Frontend</p>
+                            <p class="text-xs text-gray-600 mt-1">85% average score</p>
+                        </div>
+                        
+                        <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">🧠 Hardest Subject</span>
+                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                            </div>
+                            <p class="text-sm font-bold text-gray-900">Database Management</p>
+                            <p class="text-xs text-gray-600 mt-1">62% pass rate</p>
+                        </div>
+                        
+                        <div class="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">🕒 Upcoming Exam</span>
+                                <i class="fas fa-calendar text-purple-600"></i>
+                            </div>
+                            <p class="text-sm font-bold text-gray-900">Business Dev</p>
+                            <p class="text-xs text-gray-600 mt-1">10 Oct, 2 PM</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">⚡ Quick Actions</h3>
+                    <div class="space-y-3">
+                        <button class="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-plus-circle text-blue-600"></i>
+                                <span class="text-sm font-medium text-gray-900">Add New Course</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-blue-600 text-sm"></i>
+                        </button>
+                        
+                        <button class="w-full flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-calendar-plus text-purple-600"></i>
+                                <span class="text-sm font-medium text-gray-900">Schedule Exam</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-purple-600 text-sm"></i>
+                        </button>
+                        
+                        <button class="w-full flex items-center justify-between p-3 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-award text-green-600"></i>
+                                <span class="text-sm font-medium text-gray-900">Issue Certificates</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-green-600 text-sm"></i>
+                        </button>
+                        
+                        <button class="w-full flex items-center justify-between p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg border border-yellow-200 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-bullhorn text-yellow-600"></i>
+                                <span class="text-sm font-medium text-gray-900">Announce Update</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-yellow-600 text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="lg:ml-64 bg-gray-900 text-white py-6">
+        <div class="container mx-auto text-center text-sm px-4">
+            <p>© 2025 Elevana by InnerWhispers | Admin Dashboard v1.0</p>
+            <div class="mt-2">
+                <a href="#" class="text-gray-400 hover:text-white mx-2">Contact Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function readLoginLogs(){
+            try { return JSON.parse(localStorage.getItem('interns_login_logs') || '[]'); } catch { return []; }
+        }
+        function formatDateTime(iso){
+            try { return new Date(iso).toLocaleString(); } catch { return iso; }
+        }
+        function renderRecentLogins(){
+            const tbody = document.getElementById('recentLoginsBody');
+            if (!tbody) return;
+            const logs = readLoginLogs().slice().reverse();
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-4 px-2 text-sm text-gray-500 text-center">No login activity yet.</td></tr>';
+                return;
+            }
+            const rows = logs.map(log => `
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-3 px-2 text-sm text-gray-900">${(log.name||'-')}</td>
+                    <td class="py-3 px-2 text-sm text-gray-600">${(log.email||'-')}</td>
+                    <td class="py-3 px-2 text-xs">
+                        <span class="px-2 py-1 rounded-full ${log.role==='admin'?'bg-purple-100 text-purple-800':'bg-blue-100 text-blue-800'}">${log.role||'user'}</span>
+                    </td>
+                    <td class="py-3 px-2 text-sm text-gray-600">${formatDateTime(log.loginAt)}</td>
+                </tr>
+            `).join('');
+            tbody.innerHTML = rows;
+        }
+        document.addEventListener('DOMContentLoaded', renderRecentLogins);
+
+        // Logout handler
+        document.addEventListener('DOMContentLoaded', function(){
+            const logout = document.getElementById('adminLogout');
+            if (logout) {
+                logout.addEventListener('click', function(e){
+                    e.preventDefault();
+                    localStorage.removeItem('interns_session');
+                    window.location.href = '../../login.html';
+                });
+            }
+        });
+        // Mobile menu
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+        
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            mobileMenuOverlay.classList.toggle('hidden');
+        }
+        
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        }
+        if (mobileMenuOverlay) {
+            mobileMenuOverlay.addEventListener('click', toggleMobileMenu);
+        }
+        
+        // Profile dropdown
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                profileDropdown.classList.toggle('hidden');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                    profileDropdown.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Charts
+        const ctx1 = document.getElementById('userGrowthChart');
+        if (ctx1) {
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    datasets: [{
+                        label: 'Interns',
+                        data: [45, 62, 89, 115, 142, 178, 205, 228, 241, 254],
+                        borderColor: '#5B7FFF',
+                        backgroundColor: 'rgba(91, 127, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+        
+        const ctx2 = document.getElementById('examPerformanceChart');
+        if (ctx2) {
+            new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Attempted',
+                        data: [85, 92, 100, 78],
+                        backgroundColor: '#9A8CFF'
+                    }, {
+                        label: 'Passed',
+                        data: [68, 74, 81, 62],
+                        backgroundColor: '#22C55E'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+        
+        const ctx3 = document.getElementById('departmentChart');
+        if (ctx3) {
+            new Chart(ctx3, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Frontend', 'Backend', 'UI/UX', 'HR', 'Business Dev'],
+                    datasets: [{
+                        data: [85, 82, 78, 75, 68],
+                        backgroundColor: ['#5B7FFF', '#9A8CFF', '#22C55E', '#FBBF24', '#EF4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        const ctx4 = document.getElementById('activityChart');
+        if (ctx4) {
+            new Chart(ctx4, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Morning',
+                        data: [12, 15, 18, 20, 22, 8, 5],
+                        backgroundColor: '#FBBF24'
+                    }, {
+                        label: 'Afternoon',
+                        data: [25, 28, 32, 30, 35, 15, 10],
+                        backgroundColor: '#5B7FFF'
+                    }, {
+                        label: 'Evening',
+                        data: [18, 20, 22, 25, 28, 12, 8],
+                        backgroundColor: '#9A8CFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true }
+                    },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
