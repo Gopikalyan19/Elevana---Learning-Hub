@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beginner Level – Data & Analytics Exam</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { -webkit-font-smoothing: antialiased; background-color: #f5f7fa; }
+    .option-btn { transition: all 0.2s; cursor: pointer; background: #f0f3f7; border: 2px solid transparent; }
+    .option-btn:hover:not(.disabled) { background: #e8edf3; border-color: #0066ff; }
+    .option-btn.selected { background: #e8f4ff; border-color: #0066ff; }
+    .progress-indicator { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 500;}
+    .progress-indicator.current { background: #fff; border: 2px solid #0066ff; color: #0066ff;}
+    .progress-indicator.answered { background: #d4edda; color: #28a745;}
+    .progress-indicator.unanswered { background: #fff; border: 2px solid #e0e6ed; color: #6c757d;}
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #0066ff; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="max-w-7xl mx-auto px-6 py-8">
+  <div class="flex gap-8">
+    <main class="flex-1">
+      <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Beginner Level – Data & Analytics Exam</h2>
+        <div class="relative">
+          <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div id="mainProgressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <span id="progressPercent" class="absolute -top-1 right-0 text-sm font-semibold text-gray-900">0%</span>
+        </div>
+      </div>
+      <div id="questionContainer" class="bg-white rounded-lg p-8 shadow-sm mb-6"></div>
+      <div id="navigationButtons" class="flex justify-between">
+        <button id="btnPrevious" class="px-6 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">Previous</button>
+        <button id="btnNext" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all">Next</button>
+      </div>
+      <div id="submitSection" class="hidden mt-6 text-center">
+        <button id="submitBtn" class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg">Submit Exam</button>
+      </div>
+      <div id="resultsSection" class="hidden bg-white rounded-lg p-8 shadow-sm">
+        <div class="text-center mb-6">
+          <div class="inline-block p-4 bg-green-100 rounded-full mb-4">
+            <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Exam Completed!</h3>
+          <p class="text-gray-600">You've answered <span id="correctCount" class="font-semibold text-green-600">0</span> out of <span id="totalQuestions">21</span> questions correctly.</p>
+        </div>
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between text-gray-700">
+            <span>Total Score:</span>
+            <span class="font-semibold"><span id="totalMarks">0</span>/60 Marks</span>
+          </div>
+          <div class="flex justify-between text-gray-700">
+            <span>Percentage:</span>
+            <span class="font-semibold"><span id="percentage">0</span>%</span>
+          </div>
+        </div>
+        <div id="passMessage" class="hidden mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+          <p class="text-green-800 font-medium text-center">🎉 Congratulations! You passed the exam!</p>
+        </div>
+        <div id="failMessage" class="hidden mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+          <p class="text-red-800 font-medium text-center">Keep practicing! You need 70% to pass.</p>
+        </div>
+        <div class="flex gap-3 justify-center">
+          <button id="retakeBtn" class="px-6 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">Retake Exam</button>
+          <button id="certificateBtn" class="hidden px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all">Download Certificate</button>
+        </div>
+      </div>
+    </main>
+    <aside class="w-80 flex-shrink-0">
+      <div class="bg-blue-50 rounded-lg p-6 mb-6 text-center">
+        <div class="text-5xl font-bold text-blue-600 mb-2" id="scoreDisplay">0%</div>
+        <p class="text-sm text-gray-600">You got <span id="answeredCount">0</span> answers correct</p>
+      </div>
+      <div id="timerCard" class="bg-white rounded-lg p-4 mb-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Time Remaining</span>
+          <span id="timer" class="text-xl font-bold text-gray-900">120:00</span>
+        </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-900 mb-4">Question Progress</h3>
+        <div id="questionProgress" class="space-y-2 max-h-96 overflow-y-auto"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+const mcqData = [
+{ q: "Which of the following is NOT a data source?", opts: ["Google Forms survey", "Company CRM", "Personal diary", "Public API"], ans: "Personal diary", marks: 1 },
+{ q: "The process of removing duplicates, errors, and inconsistencies in data is called:", opts: ["Data visualization", "Data cleaning", "Data mining", "Data collection"], ans: "Data cleaning", marks: 1 },
+{ q: "When handling missing data, which approach is best for small datasets?", opts: ["Ignore missing values", "Fill with mean or median values", "Delete the entire dataset", "Replace all with zero"], ans: "Fill with mean or median values", marks: 1 },
+{ q: "A Pivot Table in Excel is used to:", opts: ["Sort data alphabetically", "Summarize and analyze data dynamically", "Merge two spreadsheets", "Clean missing values"], ans: "Summarize and analyze data dynamically", marks: 1 },
+{ q: "Which measure is most affected by outliers?", opts: ["Mean", "Median", "Mode", "Standard deviation"], ans: "Mean", marks: 1 },
+{ q: "The correlation between two variables shows:", opts: ["One variable causes the other", "The strength and direction of their relationship", "That they are unrelated", "Only their differences"], ans: "The strength and direction of their relationship", marks: 1 },
+{ q: "Which visualization is best for showing correlations?", opts: ["Pie chart", "Line graph", "Scatter plot", "Bar chart"], ans: "Scatter plot", marks: 1 },
+{ q: "Google Looker Studio was previously known as:", opts: ["Google Dashboards", "Google Data Studio", "Google Analytics", "Google Charts"], ans: "Google Data Studio", marks: 1 },
+{ q: "The best place to apply Data Validation Rules is when:", opts: ["Collecting data from users", "After cleaning the dataset", "While visualizing", "During EDA"], ans: "Collecting data from users", marks: 1 },
+{ q: "A good data story should include:", opts: ["Raw numbers only", "Clear visuals, insights, and recommendations", "Fancy charts with no context", "As many graphs as possible"], ans: "Clear visuals, insights, and recommendations", marks: 1 }
+];
+const fillData = [
+{ q: "Define data cleaning and give one real-world example.", ans: ["clean", "remove", "error", "duplicate", "example"], marks: 2, type: "text" },
+{ q: "Explain the difference between correlation and causation with an example.", ans: ["correlation", "causation", "example", "relationship"], marks: 2, type: "text" },
+{ q: "Why is data validation important before analysis?", ans: ["validation", "accuracy", "error", "quality"], marks: 2, type: "text" },
+{ q: "What are outliers and how can they affect insights?", ans: ["outlier", "extreme", "affect", "insight"], marks: 2, type: "text" },
+{ q: "Write one use case each for Pivot Tables and Google Data Studio in a business scenario.", ans: ["pivot", "table", "studio", "dashboard", "use case"], marks: 2, type: "text" }
+];
+const codeData = [
+{ q: "Data Cleaning Task: You have a dataset of customer feedback with missing “Rating” values. Replace missing ratings with the average rating of the column. (Hint: Use =AVERAGE() and logical conditions.)", ans: ["average", "if", "isblank", "replace", "rating"], marks: 5, type: "text" },
+{ q: "Pivot Table Task: Given a table with Region, Salesperson, and Sales Amount, Create a Pivot Table showing Total Sales per Region and Average Sales per Salesperson.", ans: ["pivot", "region", "salesperson", "total", "average"], marks: 5, type: "text" },
+{ q: "Outlier Detection Task: You have monthly expenses data: [12,000, 13,500, 14,000, 90,000, 13,000, 14,200]. Identify the outlier using mean and standard deviation. (Show steps using formulas.)", ans: ["mean", "average", "standard deviation", "outlier", "formula"], marks: 5, type: "text" },
+{ q: "Conditional Formatting Task: Highlight all sales above ₹50,000 in green and below ₹20,000 in red.", ans: ["conditional", "format", "green", "red", ">", "<"], marks: 5, type: "text" }
+];
+const dashboardData = [
+{ q: "Mini Dashboard Project: Create a simple Excel / Google Sheets Dashboard that summarizes the following:\nMonth | Revenue | Expenses | Customers\nJan | 1,00,000 | 70,000 | 150\nFeb | 1,20,000 | 80,000 | 170\nMar | 1,10,000 | 65,000 | 200\nApr | 1,40,000 | 75,000 | 220\nTasks:\n- Create summary KPIs: Total Revenue, Average Monthly Customers\n- Create one bar chart (Revenue vs Expenses)\n- Create one line chart (Customer Growth over months)\n- Use color formatting for performance visualization.\n- Write one short interpretation (2 lines) of what the data shows.", ans: ["dashboard", "kpi", "bar chart", "line chart", "color", "interpretation"], marks: 10, type: "text" }
+];
+const caseData = [
+{ q: "Case Study: Visualization & Storytelling\nScenario: You’re working for a wellness brand that launched three new features:\nFeature | Users | Satisfaction (%)\nMood Tracker | 350 | 85%\nGuided Journals | 220 | 78%\nDaily Quotes | 400 | 92%\nQuestions:\n- Which chart would you use to compare user satisfaction across features? Why?\n- How would you represent this data in Google Data Studio or Canva?\n- Write a short insight (2–3 lines) explaining what story this data tells.", ans: ["bar chart", "visual", "satisfaction", "feature", "insight", "studio", "canva"], marks: 10, type: "text" }
+];
+
+const allQuestions = [
+  ...mcqData.map((q, i) => ({...q, section: 'mcq', index: i})),
+  ...fillData.map((q, i) => ({...q, section: 'fill', index: i})),
+  ...codeData.map((q, i) => ({...q, section: 'code', index: i})),
+  ...dashboardData.map((q, i) => ({...q, section: 'dashboard', index: i})),
+  ...caseData.map((q, i) => ({...q, section: 'case', index: i}))
+];
+
+let currentQuestionIndex = 0;
+let userAnswers = {};
+let examDuration = 120 * 60; // 2 hours
+let timerInterval;
+let examSubmitted = false;
+const totalQuestionsCount = allQuestions.length;
+
+const questionContainer = document.getElementById('questionContainer');
+const questionProgress = document.getElementById('questionProgress');
+const mainProgressBar = document.getElementById('mainProgressBar');
+const progressPercent = document.getElementById('progressPercent');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const answeredCount = document.getElementById('answeredCount');
+const timerEl = document.getElementById('timer');
+const timerCard = document.getElementById('timerCard');
+const btnPrevious = document.getElementById('btnPrevious');
+const btnNext = document.getElementById('btnNext');
+const navigationButtons = document.getElementById('navigationButtons');
+const submitSection = document.getElementById('submitSection');
+const submitBtn = document.getElementById('submitBtn');
+const resultsSection = document.getElementById('resultsSection');
+const correctCountEl = document.getElementById('correctCount');
+const totalQuestionsEl = document.getElementById('totalQuestions');
+const totalMarksEl = document.getElementById('totalMarks');
+const percentageEl = document.getElementById('percentage');
+const passMessage = document.getElementById('passMessage');
+const failMessage = document.getElementById('failMessage');
+const retakeBtn = document.getElementById('retakeBtn');
+const certificateBtn = document.getElementById('certificateBtn');
+
+const escapeHTML = str => String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+function startTimer() { timerInterval = setInterval(() => {
+  examDuration--; timerEl.textContent = formatTime(examDuration);
+  if (examDuration <= 300) timerEl.classList.add('text-red-600', 'font-bold');
+  if (examDuration <= 0) { clearInterval(timerInterval); alert('⏰ Time is up! Your exam will be auto-submitted.'); submitExam(); }
+}, 1000);}
+function stopTimer() { if (timerInterval) clearInterval(timerInterval); }
+function updateProgress() {
+  const answered = Object.keys(userAnswers).filter(key => userAnswers[key] && userAnswers[key].toString().trim() !== '').length;
+  const percent = Math.round((answered / totalQuestionsCount) * 100);
+  mainProgressBar.style.width = percent + '%';
+  progressPercent.textContent = percent + '%';
+  scoreDisplay.textContent = percent + '%';
+  answeredCount.textContent = answered;
+  renderQuestionProgress();
+}
+function renderQuestionProgress() {
+  questionProgress.innerHTML = '';
+  allQuestions.forEach((q, idx) => {
+    const key = q.section + q.index;
+    const hasAnswer = userAnswers[key] && userAnswers[key].toString().trim() !== '';
+    const div = document.createElement('div');
+    div.className = 'progress-indicator';
+    if (idx === currentQuestionIndex) div.classList.add('current');
+    else if (hasAnswer) div.classList.add('answered');
+    else div.classList.add('unanswered');
+    const icon = document.createElement('span');
+    icon.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/></svg>`;
+    const text = document.createElement('span');
+    text.textContent = `Question ${idx + 1}`;
+    div.appendChild(icon);
+    div.appendChild(text);
+    div.style.cursor = 'pointer';
+    div.addEventListener('click', () => {
+      if (!examSubmitted) {
+        currentQuestionIndex = idx;
+        renderQuestion(); updateNavButtons(); updateProgress();
+      }
+    });
+    questionProgress.appendChild(div);
+  });
+}
+function renderQuestion() {
+  const q = allQuestions[currentQuestionIndex];
+  const key = q.section + q.index;
+  const savedAnswer = userAnswers[key] || '';
+  let html = `<div class="mb-6">
+    <p class="text-sm font-semibold text-gray-500 mb-2">Question ${currentQuestionIndex + 1}/${totalQuestionsCount}</p>
+    <h3 class="text-xl font-bold text-gray-900 mb-4 whitespace-pre-wrap leading-relaxed">${escapeHTML(q.q)}</h3>
+    ${q.marks > 1 ? `<p class="text-sm text-blue-600 font-medium mb-4">${q.marks} Marks</p>` : ''}
+  </div>`;
+  if (q.section === 'mcq') {
+    html += '<div class="space-y-3">';
+    q.opts.forEach(opt => {
+      const isSelected = savedAnswer === opt;
+      html += `<div class="option-btn ${isSelected ? 'selected' : ''} ${examSubmitted ? 'disabled' : ''} rounded-lg p-4" data-value="${escapeHTML(opt)}">${escapeHTML(opt)}</div>`;
+    });
+    html += '</div>';
+  } else if (q.section === 'fill') {
+    html += `<div><textarea id="fillInput" rows="4" placeholder="Type your answer here..." class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition-all" ${examSubmitted ? 'disabled' : ''}>${escapeHTML(savedAnswer)}</textarea></div>`;
+  } else if (q.section === 'code' || q.section === 'dashboard' || q.section === 'case') {
+    html += `<div><label class="block text-sm font-medium text-gray-700 mb-2">Answer:</label><textarea id="codeInput" rows="7" placeholder="Write your answer here..." class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-mono text-sm resize-y focus:outline-none focus:border-blue-600 transition-all" ${examSubmitted ? 'disabled' : ''}>${escapeHTML(savedAnswer)}</textarea></div>`;
+  }
+  questionContainer.innerHTML = html;
+  if (!examSubmitted) {
+    if (q.section === 'mcq') {
+      questionContainer.querySelectorAll('.option-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          if (examSubmitted) return;
+          questionContainer.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+          this.classList.add('selected');
+          userAnswers[key] = this.dataset.value; updateProgress();
+        });
+      });
+    } else if (q.section === 'fill') {
+      const input = document.getElementById('fillInput');
+      input.addEventListener('input', function() {
+        userAnswers[key] = this.value.trim(); updateProgress();
+      });
+    } else if (q.section === 'code' || q.section === 'dashboard' || q.section === 'case') {
+      const textarea = document.getElementById('codeInput');
+      textarea.addEventListener('input', function() {
+        userAnswers[key] = this.value.trim(); updateProgress();
+      });
+    }
+  }
+}
+function updateNavButtons() {
+  btnPrevious.disabled = currentQuestionIndex === 0;
+  btnNext.disabled = currentQuestionIndex === totalQuestionsCount - 1;
+  if (currentQuestionIndex === 0) btnPrevious.classList.add('opacity-50', 'cursor-not-allowed');
+  else btnPrevious.classList.remove('opacity-50', 'cursor-not-allowed');
+  if (currentQuestionIndex === totalQuestionsCount - 1) { btnNext.classList.add('hidden'); submitSection.classList.remove('hidden'); }
+  else { btnNext.classList.remove('hidden'); submitSection.classList.add('hidden'); }
+}
+function checkAnswer(q, userAns) {
+  let isCorrect = false, marks = 0;
+  if (q.section === 'mcq') { isCorrect = userAns === q.ans; marks = isCorrect ? q.marks : 0;
+  } else if (q.section === 'fill') {
+    const normalized = (userAns || '').toLowerCase().trim();
+    isCorrect = q.ans.some(a => normalized.includes(a.toLowerCase()));
+    marks = isCorrect ? q.marks : 0;
+  } else if (q.section === 'code' || q.section === 'dashboard' || q.section === 'case') {
+    const normalized = (userAns || '').toLowerCase();
+    if (!normalized) { return { isCorrect: false, marks: 0 }; }
+    const matchCount = q.ans.filter(keyword => normalized.includes(keyword.toLowerCase())).length;
+    marks = Math.floor((matchCount / q.ans.length) * q.marks); isCorrect = marks > 0;
+  }
+  return { isCorrect, marks };
+}
+function submitExam() {
+  if (examSubmitted) return;
+  const unanswered = totalQuestionsCount - Object.keys(userAnswers).filter(k => userAnswers[k] && userAnswers[k].toString().trim() !== '').length;
+  if (unanswered > 0) { if (!confirm(`You have ${unanswered} unanswered question(s). Do you want to submit anyway?`)) return; }
+  examSubmitted = true; stopTimer();
+  let correctCount = 0, totalMarks = 0;
+  allQuestions.forEach(q => {
+    const key = q.section + q.index; const result = checkAnswer(q, userAnswers[key]);
+    totalMarks += result.marks; if (result.isCorrect) correctCount++;
+  });
+  const percentage = Math.round((totalMarks / 60) * 100);
+  correctCountEl.textContent = correctCount;
+  totalQuestionsEl.textContent = totalQuestionsCount;
+  totalMarksEl.textContent = totalMarks;
+  percentageEl.textContent = percentage;
+  if (percentage >= 70) { passMessage.classList.remove('hidden'); failMessage.classList.add('hidden'); certificateBtn.classList.remove('hidden');
+  } else { passMessage.classList.add('hidden'); failMessage.classList.remove('hidden'); certificateBtn.classList.add('hidden'); }
+  questionContainer.classList.add('hidden');
+  navigationButtons.classList.add('hidden');
+  submitSection.classList.add('hidden');
+  timerCard.classList.add('hidden');
+  resultsSection.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function generateCertificate() {
+  const userName = prompt("Enter your name for the certificate:");
+  if (!userName || userName.trim() === '') return alert('Name is required to generate certificate.');
+  const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
+  doc.setFillColor(245, 247, 250); doc.rect(0, 0, 297, 210, 'F');
+  doc.setLineWidth(2); doc.setDrawColor(0, 102, 255); doc.rect(10, 10, 277, 190);
+  doc.setLineWidth(0.5); doc.setDrawColor(100, 150, 255); doc.rect(15, 15, 267, 180);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(32); doc.setTextColor(0, 102, 255);
+  doc.text("CERTIFICATE OF COMPLETION", 148.5, 50, { align: "center" });
+  doc.setFontSize(14); doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60);
+  doc.text("This certifies that", 148.5, 70, { align: "center" });
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(26); doc.setTextColor(0, 102, 255);
+  doc.text(userName, 148.5, 90, { align: "center" });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(14); doc.setTextColor(60, 60, 60);
+  doc.text("has successfully completed the", 148.5, 110, { align: "center" });
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+  doc.text("Data & Analytics – Beginner", 148.5, 125, { align: "center" });
+  const score = totalMarksEl.textContent;
+  const percent = percentageEl.textContent;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(13);
+  doc.text(`Score: ${score}/60 Marks (${percent}%)`, 148.5, 145, { align: "center" });
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  doc.setFontSize(11);
+  doc.text(`Date: ${today}`, 148.5, 165, { align: "center" });
+  doc.setFontSize(10); doc.setTextColor(100, 100, 120);
+  doc.text("Elavana - By InnerWhispers", 148.5, 185, { align: "center" });
+  doc.save(`Certificate_${userName.replace(/\s+/g, '_')}_Analytics.pdf`);
+  alert('Certificate downloaded successfully!');
+}
+btnPrevious.addEventListener('click', () => { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuestion(); updateNavButtons(); updateProgress(); } });
+btnNext.addEventListener('click', () => { if (currentQuestionIndex < totalQuestionsCount - 1) { currentQuestionIndex++; renderQuestion(); updateNavButtons(); updateProgress(); } });
+submitBtn.addEventListener('click', submitExam);
+retakeBtn.addEventListener('click', () => location.reload());
+certificateBtn.addEventListener('click', generateCertificate);
+
+function init() {
+  renderQuestion(); updateNavButtons(); updateProgress(); startTimer();
+  window.addEventListener('beforeunload', (e) => {
+    if (!examSubmitted) { e.preventDefault(); e.returnValue = ''; }
+  });
+}
+init();
+</script>
+</body>
+</html>

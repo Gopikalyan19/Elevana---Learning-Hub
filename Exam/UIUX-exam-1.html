@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UI/UX Design — Introduction Level: Final Examination</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { -webkit-font-smoothing: antialiased; background-color: #f5f7fa; }
+    .option-btn {
+      transition: all 0.2s ease;
+      cursor: pointer;
+      background: #f0f3f7;
+      border: 2px solid transparent;
+    }
+    .option-btn:hover:not(.disabled) {
+      background: #e8edf3;
+      border-color: #0066ff;
+    }
+    .option-btn.selected {
+      background: #e8f4ff;
+      border-color: #0066ff;
+    }
+    .progress-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .progress-indicator.current {
+      background: #fff;
+      border: 2px solid #0066ff;
+      color: #0066ff;
+    }
+    .progress-indicator.answered {
+      background: #d4edda;
+      color: #28a745;
+    }
+    .progress-indicator.unanswered {
+      background: #fff;
+      border: 2px solid #e0e6ed;
+      color: #6c757d;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #0066ff; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+  <div class="flex gap-8">
+    <!-- MAIN CONTENT -->
+    <main class="flex-1">
+      <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">UI/UX Design — Introduction Level: Final Examination</h2>
+        <div class="relative">
+          <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div id="mainProgressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <span id="progressPercent" class="absolute -top-1 right-0 text-sm font-semibold text-gray-900">0%</span>
+        </div>
+      </div>
+      <div id="questionContainer" class="bg-white rounded-lg p-8 shadow-sm mb-6"></div>
+      <div id="navigationButtons" class="flex justify-between">
+        <button id="btnPrevious" class="px-6 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">Previous</button>
+        <button id="btnNext" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all">Next</button>
+      </div>
+      <div id="submitSection" class="hidden mt-6 text-center">
+        <button id="submitBtn" class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg">Submit Exam</button>
+      </div>
+      <div id="resultsSection" class="hidden bg-white rounded-lg p-8 shadow-sm">
+        <div class="text-center mb-6">
+          <div class="inline-block p-4 bg-green-100 rounded-full mb-4">
+            <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Exam Completed!</h3>
+          <p class="text-gray-600">You've answered <span id="correctCount" class="font-semibold text-green-600">0</span> out of <span id="totalQuestions">25</span> questions correctly.</p>
+        </div>
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between text-gray-700">
+            <span>Total Score:</span>
+            <span class="font-semibold"><span id="totalMarks">0</span>/50 Marks</span>
+          </div>
+          <div class="flex justify-between text-gray-700">
+            <span>Percentage:</span>
+            <span class="font-semibold"><span id="percentage">0</span>%</span>
+          </div>
+        </div>
+        <div id="passMessage" class="hidden mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+          <p class="text-green-800 font-medium text-center">🎉 Congratulations! You passed the exam!</p>
+        </div>
+        <div id="failMessage" class="hidden mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+          <p class="text-red-800 font-medium text-center">Keep practicing! You need 70% to pass.</p>
+        </div>
+        <div class="flex gap-3 justify-center">
+          <button id="retakeBtn" class="px-6 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">Retake Exam</button>
+          <button id="certificateBtn" class="hidden px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all">Download Certificate</button>
+        </div>
+      </div>
+    </main>
+    <!-- SIDEBAR -->
+    <aside class="w-80 flex-shrink-0">
+      <div class="bg-blue-50 rounded-lg p-6 mb-6 text-center">
+        <div class="text-5xl font-bold text-blue-600 mb-2" id="scoreDisplay">0%</div>
+        <p class="text-sm text-gray-600">You got <span id="answeredCount">0</span> answers correct</p>
+      </div>
+      <div id="timerCard" class="bg-white rounded-lg p-4 mb-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Time Remaining</span>
+          <span id="timer" class="text-xl font-bold text-gray-900">75:00</span>
+        </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-900 mb-4">Question Progress</h3>
+        <div id="questionProgress" class="space-y-2 max-h-96 overflow-y-auto"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const mcqData = [
+  { q: "What is the main goal of UX Design?", opts: ["To make products look beautiful", "To ensure users have a seamless and meaningful experience", "To develop backend logic", "To create brand logos"], ans: "To ensure users have a seamless and meaningful experience", marks: 2 },
+  { q: "Which of the following best describes UI Design?", opts: ["How a product feels", "How a product looks and interacts visually", "How fast a website loads", "The coding part of design"], ans: "How a product looks and interacts visually", marks: 2 },
+  { q: "Which of the following correctly represents the 5 stages of Design Thinking?", opts: ["Research → Create → Test → Deploy → Market", "Empathize → Define → Ideate → Prototype → Test", "Discover → Design → Deliver → Debug → Deploy", "Define → Develop → Deliver → Design → Debug"], ans: "Empathize → Define → Ideate → Prototype → Test", marks: 2 },
+  { q: "The principle of Hierarchy in design is used to:", opts: ["Randomize all elements", "Arrange elements by importance to guide attention", "Reduce readability", "Avoid spacing"], ans: "Arrange elements by importance to guide attention", marks: 2 },
+  { q: "Which color combination ensures maximum readability for text?", opts: ["Light gray text on white background", "Yellow text on green background", "Black text on white background", "White text on yellow background"], ans: "Black text on white background", marks: 2 },
+  { q: "White space in design is also known as:", opts: ["Negative space", "Empty error zone", "Design waste", "Text padding"], ans: "Negative space", marks: 2 },
+  { q: "In Figma, “Components” are used to:", opts: ["Add animations", "Reuse design elements consistently", "Change screen color", "Export files only"], ans: "Reuse design elements consistently", marks: 2 },
+  { q: "Which of the following ensures accessibility in design?", opts: ["Using small text for all users", "Maintaining color contrast and alt text for images", "Using bright colors only", "Removing keyboard navigation"], ans: "Maintaining color contrast and alt text for images", marks: 2 },
+  { q: "Alt Text is primarily used to:", opts: ["Add animations", "Describe images for screen readers", "Improve typography", "Create buttons"], ans: "Describe images for screen readers", marks: 2 },
+  { q: "A developer handoff is important because:", opts: ["Designers finalize colors", "Developers understand and implement the intended visuals and interactions", "It ends the project permanently", "Designers test code"], ans: "Developers understand and implement the intended visuals and interactions", marks: 2 }
+];
+
+const fillData = [
+  { q: "UX stands for __________ Experience.", ans: ["User"], marks: 1 },
+  { q: "The process of understanding user needs deeply is called __________.", ans: ["empathy", "empathizing", "user research", "empathise"], marks: 1 },
+  { q: "In design, contrast helps to make important elements __________.", ans: ["stand out", "visible", "prominent", "noticeable"], marks: 1 },
+  { q: "Figma uses frames to create structured layouts similar to __________.", ans: ["artboards", "pages", "canvases"], marks: 1 },
+  { q: "Designing for users with disabilities or limitations is known as __________ design.", ans: ["accessible", "accessibility", "inclusive"], marks: 1 }
+];
+
+const tfData = [
+  { q: "Good UX design focuses only on visuals, not usability.", ans: "FALSE", marks: 1 },
+  { q: "Accessibility is only necessary for government websites.", ans: "FALSE", marks: 1 },
+  { q: "Typography influences readability and user perception.", ans: "TRUE", marks: 1 },
+  { q: "In Figma, grids help maintain alignment and visual balance.", ans: "TRUE", marks: 1 },
+  { q: "Developer handoff includes exporting design assets and sharing specifications.", ans: "TRUE", marks: 1 }
+];
+
+const codeData = [
+  { q: "Design Thinking Scenario: You are designing a mental wellness app for teens. Describe how you would apply the 5 stages of Design Thinking in brief (Empathize → Define → Ideate → Prototype → Test).", ans: ["empathize", "define", "ideate", "prototype", "test"], marks: 4, type: "text" },
+  { q: "Visual Design Application: Given the following screen elements: Heading, Description, CTA Button. Explain how you would arrange them to achieve visual hierarchy and balance. Include notes on spacing, alignment, and color choice.", ans: ["hierarchy", "spacing", "alignment", "color", "cta", "heading", "description"], marks: 4, type: "text" },
+  { q: "Figma Practical: List the steps to create a reusable “Button Component” in Figma and how to update all instances later.", ans: ["component", "create", "button", "instance", "update", "main"], marks: 4, type: "text" },
+  { q: "Accessibility Check: A user with color blindness struggles to distinguish between your success and error messages (green & red). What 2–3 design adjustments would you make to improve accessibility?", ans: ["icon", "label", "pattern", "contrast", "text", "shape"], marks: 4, type: "text" },
+  { q: "Developer Handoff Simulation: You’ve designed a login screen in Figma. What key information and exports should you hand over to the developer to ensure accurate implementation?", ans: ["specifications", "assets", "colors", "fonts", "spacing", "export", "handoff"], marks: 4, type: "text" }
+];
+
+const allQuestions = [
+  ...mcqData.map((q, i) => ({...q, section: 'mcq', index: i})),
+  ...fillData.map((q, i) => ({...q, section: 'fill', index: i})),
+  ...tfData.map((q, i) => ({...q, section: 'tf', index: i})),
+  ...codeData.map((q, i) => ({...q, section: 'code', index: i}))
+];
+
+let currentQuestionIndex = 0;
+let userAnswers = {};
+let examDuration = 75 * 60; // 60–75 min duration
+let timerInterval;
+let examSubmitted = false;
+const totalQuestionsCount = allQuestions.length;
+
+const questionContainer = document.getElementById('questionContainer');
+const questionProgress = document.getElementById('questionProgress');
+const mainProgressBar = document.getElementById('mainProgressBar');
+const progressPercent = document.getElementById('progressPercent');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const answeredCount = document.getElementById('answeredCount');
+const timerEl = document.getElementById('timer');
+const timerCard = document.getElementById('timerCard');
+const btnPrevious = document.getElementById('btnPrevious');
+const btnNext = document.getElementById('btnNext');
+const navigationButtons = document.getElementById('navigationButtons');
+const submitSection = document.getElementById('submitSection');
+const submitBtn = document.getElementById('submitBtn');
+const resultsSection = document.getElementById('resultsSection');
+const correctCountEl = document.getElementById('correctCount');
+const totalQuestionsEl = document.getElementById('totalQuestions');
+const totalMarksEl = document.getElementById('totalMarks');
+const percentageEl = document.getElementById('percentage');
+const passMessage = document.getElementById('passMessage');
+const failMessage = document.getElementById('failMessage');
+const retakeBtn = document.getElementById('retakeBtn');
+const certificateBtn = document.getElementById('certificateBtn');
+
+const escapeHTML = str => String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    examDuration--;
+    timerEl.textContent = formatTime(examDuration);
+    if (examDuration <= 300) timerEl.classList.add('text-red-600', 'font-bold');
+    if (examDuration <= 0) {
+      clearInterval(timerInterval);
+      alert('⏰ Time is up! Your exam will be auto-submitted.');
+      submitExam();
+    }
+  }, 1000);
+}
+
+function stopTimer() { if (timerInterval) clearInterval(timerInterval); }
+
+function updateProgress() {
+  const answered = Object.keys(userAnswers).filter(key => userAnswers[key] && userAnswers[key].toString().trim() !== '').length;
+  const percent = Math.round((answered / totalQuestionsCount) * 100);
+  mainProgressBar.style.width = percent + '%';
+  progressPercent.textContent = percent + '%';
+  scoreDisplay.textContent = percent + '%';
+  answeredCount.textContent = answered;
+  renderQuestionProgress();
+}
+
+function renderQuestionProgress() {
+  questionProgress.innerHTML = '';
+  allQuestions.forEach((q, idx) => {
+    const key = q.section + q.index;
+    const hasAnswer = userAnswers[key] && userAnswers[key].toString().trim() !== '';
+    const div = document.createElement('div');
+    div.className = 'progress-indicator';
+    if (idx === currentQuestionIndex) div.classList.add('current');
+    else if (hasAnswer) div.classList.add('answered');
+    else div.classList.add('unanswered');
+    const icon = document.createElement('span');
+    icon.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/></svg>`;
+    const text = document.createElement('span');
+    text.textContent = `Question ${idx + 1}`;
+    div.appendChild(icon);
+    div.appendChild(text);
+    div.style.cursor = 'pointer';
+    div.addEventListener('click', () => {
+      if (!examSubmitted) {
+        currentQuestionIndex = idx;
+        renderQuestion();
+        updateNavButtons();
+        updateProgress();
+      }
+    });
+    questionProgress.appendChild(div);
+  });
+}
+
+function renderQuestion() {
+  const q = allQuestions[currentQuestionIndex];
+  const key = q.section + q.index;
+  const savedAnswer = userAnswers[key] || '';
+  let html = `<div class="mb-6">
+    <p class="text-sm font-semibold text-gray-500 mb-2">Question ${currentQuestionIndex + 1}/${totalQuestionsCount}</p>
+    <h3 class="text-xl font-bold text-gray-900 mb-4 whitespace-pre-wrap leading-relaxed">${escapeHTML(q.q)}</h3>
+    ${q.marks > 1 ? `<p class="text-sm text-blue-600 font-medium mb-4">${q.marks} Marks</p>` : ''}
+  </div>`;
+  if (q.section === 'mcq') {
+    html += '<div class="space-y-3">';
+    q.opts.forEach(opt => {
+      const isSelected = savedAnswer === opt;
+      html += `<div class="option-btn ${isSelected ? 'selected' : ''} ${examSubmitted ? 'disabled' : ''} rounded-lg p-4" data-value="${escapeHTML(opt)}">${escapeHTML(opt)}</div>`;
+    });
+    html += '</div>';
+  } else if (q.section === 'fill') {
+    html += `<div><input type="text" id="fillInput" value="${escapeHTML(savedAnswer)}" placeholder="Type your answer here..." class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition-all" ${examSubmitted ? 'disabled' : ''} /></div>`;
+  } else if (q.section === 'tf') {
+    html += `<div class="space-y-3">`;
+    ["TRUE", "FALSE"].forEach(opt => {
+      const isSelected = savedAnswer === opt;
+      html += `<div class="option-btn ${isSelected ? 'selected' : ''} ${examSubmitted ? 'disabled' : ''} rounded-lg p-4" data-value="${opt}">${opt}</div>`;
+    });
+    html += '</div>';
+  } else if (q.section === 'code') {
+    html += `<div><label class="block text-sm font-medium text-gray-700 mb-2">Answer:</label><textarea id="codeInput" rows="6" placeholder="Write your answer here..." class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-mono text-sm resize-y focus:outline-none focus:border-blue-600 transition-all" ${examSubmitted ? 'disabled' : ''}>${escapeHTML(savedAnswer)}</textarea></div>`;
+  }
+  questionContainer.innerHTML = html;
+
+  if (!examSubmitted) {
+    if (q.section === 'mcq' || q.section === 'tf') {
+      questionContainer.querySelectorAll('.option-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          if (examSubmitted) return;
+          questionContainer.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+          this.classList.add('selected');
+          userAnswers[key] = this.dataset.value;
+          updateProgress();
+        });
+      });
+    } else if (q.section === 'fill') {
+      const input = document.getElementById('fillInput');
+      input.addEventListener('input', function() {
+        userAnswers[key] = this.value.trim();
+        updateProgress();
+      });
+    } else if (q.section === 'code') {
+      const textarea = document.getElementById('codeInput');
+      textarea.addEventListener('input', function() {
+        userAnswers[key] = this.value.trim();
+        updateProgress();
+      });
+    }
+  }
+}
+
+function updateNavButtons() {
+  btnPrevious.disabled = currentQuestionIndex === 0;
+  btnNext.disabled = currentQuestionIndex === totalQuestionsCount - 1;
+  if (currentQuestionIndex === 0) btnPrevious.classList.add('opacity-50', 'cursor-not-allowed');
+  else btnPrevious.classList.remove('opacity-50', 'cursor-not-allowed');
+  if (currentQuestionIndex === totalQuestionsCount - 1) {
+    btnNext.classList.add('hidden');
+    submitSection.classList.remove('hidden');
+  } else {
+    btnNext.classList.remove('hidden');
+    submitSection.classList.add('hidden');
+  }
+}
+
+function checkAnswer(q, userAns) {
+  let isCorrect = false, marks = 0;
+  if (q.section === 'mcq' || q.section === 'tf') {
+    isCorrect = userAns === q.ans;
+    marks = isCorrect ? q.marks : 0;
+  } else if (q.section === 'fill') {
+    const normalized = (userAns || '').toLowerCase().trim();
+    isCorrect = q.ans.some(a => normalized.includes(a.toLowerCase()));
+    marks = isCorrect ? q.marks : 0;
+  } else if (q.section === 'code') {
+    const normalized = (userAns || '').toLowerCase();
+    const matchCount = q.ans.filter(keyword => normalized.includes(keyword.toLowerCase())).length;
+    marks = Math.floor((matchCount / q.ans.length) * q.marks);
+    isCorrect = marks > 0;
+  }
+  return { isCorrect, marks };
+}
+
+function submitExam() {
+  if (examSubmitted) return;
+  const unanswered = totalQuestionsCount - Object.keys(userAnswers).filter(k => userAnswers[k] && userAnswers[k].toString().trim() !== '').length;
+  if (unanswered > 0) {
+    if (!confirm(`You have ${unanswered} unanswered question(s). Do you want to submit anyway?`)) return;
+  }
+  examSubmitted = true;
+  stopTimer();
+  let correctCount = 0, totalMarks = 0;
+  allQuestions.forEach(q => {
+    const key = q.section + q.index;
+    const result = checkAnswer(q, userAnswers[key]);
+    totalMarks += result.marks;
+    if (result.isCorrect) correctCount++;
+  });
+  const percentage = Math.round((correctCount / totalQuestionsCount) * 100);
+  correctCountEl.textContent = correctCount;
+  totalQuestionsEl.textContent = totalQuestionsCount;
+  totalMarksEl.textContent = totalMarks;
+  percentageEl.textContent = percentage;
+  if (percentage >= 70) {
+    passMessage.classList.remove('hidden');
+    failMessage.classList.add('hidden');
+    certificateBtn.classList.remove('hidden');
+  } else {
+    passMessage.classList.add('hidden');
+    failMessage.classList.remove('hidden');
+    certificateBtn.classList.add('hidden');
+  }
+  questionContainer.classList.add('hidden');
+  navigationButtons.classList.add('hidden');
+  submitSection.classList.add('hidden');
+  timerCard.classList.add('hidden');
+  resultsSection.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function generateCertificate() {
+  const userName = prompt("Enter your name for the certificate:");
+  if (!userName || userName.trim() === '') return alert('Name is required to generate certificate.');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('landscape');
+  doc.setFillColor(245, 247, 250);
+  doc.rect(0, 0, 297, 210, 'F');
+  doc.setLineWidth(2);
+  doc.setDrawColor(0, 102, 255);
+  doc.rect(10, 10, 277, 190);
+  doc.setLineWidth(0.5);
+  doc.setDrawColor(100, 150, 255);
+  doc.rect(15, 15, 267, 180);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(32);
+  doc.setTextColor(0, 102, 255);
+  doc.text("CERTIFICATE OF COMPLETION", 148.5, 50, { align: "center" });
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(60, 60, 60);
+  doc.text("This certifies that", 148.5, 70, { align: "center" });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(26);
+  doc.setTextColor(0, 102, 255);
+  doc.text(userName, 148.5, 90, { align: "center" });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(14);
+  doc.setTextColor(60, 60, 60);
+  doc.text("has successfully completed the", 148.5, 110, { align: "center" });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text("UI/UX Design — Introduction", 148.5, 125, { align: "center" });
+  const score = totalMarksEl.textContent;
+  const percent = percentageEl.textContent;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(13);
+  doc.text(`Score: ${score}/50 Marks (${percent}%)`, 148.5, 145, { align: "center" });
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  doc.setFontSize(11);
+  doc.text(`Date: ${today}`, 148.5, 165, { align: "center" });
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 120);
+  doc.text("Elavana - By InnerWhispers", 148.5, 185, { align: "center" });
+  doc.save(`Certificate_${userName.replace(/\s+/g, '_')}_UIUX.pdf`);
+  alert(' Certificate downloaded successfully!');
+}
+
+btnPrevious.addEventListener('click', () => {
+  if (currentQuestionIndex > 0) {
+    currentQuestionIndex--;
+    renderQuestion();
+    updateNavButtons();
+    updateProgress();
+  }
+});
+btnNext.addEventListener('click', () => {
+  if (currentQuestionIndex < totalQuestionsCount - 1) {
+    currentQuestionIndex++;
+    renderQuestion();
+    updateNavButtons();
+    updateProgress();
+  }
+});
+submitBtn.addEventListener('click', submitExam);
+retakeBtn.addEventListener('click', () => location.reload());
+certificateBtn.addEventListener('click', generateCertificate);
+
+function init() {
+  renderQuestion();
+  updateNavButtons();
+  updateProgress();
+  startTimer();
+  window.addEventListener('beforeunload', (e) => {
+    if (!examSubmitted) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+}
+init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Frontend Development - Beginner Level: Final Examination</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { -webkit-font-smoothing: antialiased; background-color: #f5f7fa; }
+    .option-btn {
+      transition: all 0.2s ease;
+      cursor: pointer;
+      background: #f0f3f7;
+      border: 2px solid transparent;
+    }
+    .option-btn:hover:not(.disabled) {
+      background: #e8edf3;
+      border-color: #0066ff;
+    }
+    .option-btn.selected {
+      background: #e8f4ff;
+      border-color: #0066ff;
+    }
+    .option-btn.correct {
+      background: #d4edda;
+      border-color: #28a745;
+    }
+    .option-btn.wrong {
+      background: #f8d7da;
+      border-color: #dc3545;
+    }
+    .progress-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .progress-indicator.correct {
+      background: #d4edda;
+      color: #28a745;
+    }
+    .progress-indicator.wrong {
+      background: #f8d7da;
+      color: #dc3545;
+    }
+    .progress-indicator.current {
+      background: #fff;
+      border: 2px solid #0066ff;
+      color: #0066ff;
+    }
+    .progress-indicator.unanswered {
+      background: #fff;
+      border: 2px solid #e0e6ed;
+      color: #6c757d;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #0066ff; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+  <div class="flex gap-8">
+    
+    <!-- MAIN CONTENT -->
+    <main class="flex-1">
+      
+      <!-- Quiz Header -->
+      <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Frontend Development — Beginner Level: Final Examination</h2>
+        <div class="relative">
+          <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div id="mainProgressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <span id="progressPercent" class="absolute -top-1 right-0 text-sm font-semibold text-gray-900">0%</span>
+        </div>
+      </div>
+
+      <!-- Question Container -->
+      <div id="questionContainer" class="bg-white rounded-lg p-8 shadow-sm mb-6">
+        <!-- Question content will be injected here -->
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div id="navigationButtons" class="flex justify-between">
+        <button id="btnPrevious" class="px-6 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">
+          Previous
+        </button>
+        <button id="btnNext" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all">
+          Next
+        </button>
+      </div>
+
+      <!-- Submit Button -->
+      <div id="submitSection" class="hidden mt-6 text-center">
+        <button id="submitBtn" class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg">
+          Submit Exam
+        </button>
+      </div>
+
+      <!-- Results Section -->
+      <div id="resultsSection" class="hidden bg-white rounded-lg p-8 shadow-sm">
+        <div class="text-center mb-6">
+          <div class="inline-block p-4 bg-green-100 rounded-full mb-4">
+            <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Exam Completed!</h3>
+          <p class="text-gray-600">You've answered <span id="correctCount" class="font-semibold text-green-600">0</span> out of <span id="totalQuestions">25</span> questions correctly.</p>
+        </div>
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between text-gray-700">
+            <span>Total Score:</span>
+            <span class="font-semibold"><span id="totalMarks">0</span>/50 Marks</span>
+          </div>
+          <div class="flex justify-between text-gray-700">
+            <span>Percentage:</span>
+            <span class="font-semibold"><span id="percentage">0</span>%</span>
+          </div>
+        </div>
+        <div id="passMessage" class="hidden mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+          <p class="text-green-800 font-medium text-center">🎉 Congratulations! You passed the exam!</p>
+        </div>
+        <div id="failMessage" class="hidden mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+          <p class="text-red-800 font-medium text-center">Keep practicing! You need 70% to pass.</p>
+        </div>
+        <div class="flex gap-3 justify-center">
+          <button id="retakeBtn" class="px-6 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">
+            Retake Exam
+          </button>
+          <button id="certificateBtn" class="hidden px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all">
+            Download Certificate
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside class="w-80 flex-shrink-0">
+      
+      <!-- Score Card -->
+      <div class="bg-blue-50 rounded-lg p-6 mb-6 text-center">
+        <div class="text-5xl font-bold text-blue-600 mb-2" id="scoreDisplay">0%</div>
+        <p class="text-sm text-gray-600">You got <span id="answeredCount">0</span> answers correct</p>
+      </div>
+
+      <!-- Timer Card -->
+      <div id="timerCard" class="bg-white rounded-lg p-4 mb-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Time Remaining</span>
+          <span id="timer" class="text-xl font-bold text-gray-900">90:00</span>
+        </div>
+      </div>
+
+      <!-- Question Progress -->
+      <div class="bg-white rounded-lg p-4 shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-900 mb-4">Question Progress</h3>
+        <div id="questionProgress" class="space-y-2 max-h-96 overflow-y-auto">
+          <!-- Progress indicators will be injected here -->
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+</div>
+
+<script>
+  // ==================== QUESTION DATA ====================
+  const mcqData = [
+    { q: "In Flexbox, the property `align-items: center;` controls alignment along the:", opts: ["Main axis", "Cross axis", "Inline axis", "Flex direction"], ans: "Cross axis", marks: 2 },
+    { q: "Which of the following best describes CSS Grid?", opts: ["One-dimensional layout system", "Two-dimensional layout system", "For inline elements only", "Used for typography"], ans: "Two-dimensional layout system", marks: 2 },
+    { q: "What does Tailwind's utility-first approach emphasize?", opts: ["Writing custom CSS for every element", "Composing designs using predefined utility classes", "Avoiding class names", "Inline styling"], ans: "Composing designs using predefined utility classes", marks: 2 },
+    { q: "In Tailwind, which of the following applies margin on all sides?", opts: ["`p-4`", "`m-4`", "`mx-4`", "`my-4`"], ans: "`m-4`", marks: 2 },
+    { q: 'What will be the output of this JavaScript code?\nlet a = 5;\nlet b = "5";\nconsole.log(a == b, a === b);', opts: ["`true, true`", "`true, false`", "`false, true`", "`false, false`"], ans: "`true, false`", marks: 2 },
+    { q: "The Document Object Model (DOM) represents the webpage as:", opts: ["A list of HTML tags", "A tree of objects", "A CSS stylesheet", "A JSON file"], ans: "A tree of objects", marks: 2 },
+    { q: "Which method adds a new element to the DOM in JavaScript?", opts: ["`append()`", "`add()`", "`push()`", "`insert()`"], ans: "`append()`", marks: 2 },
+    { q: "In event handling, `event.preventDefault()` is used to:", opts: ["Stop event propagation", "Prevent the default browser behavior (like form submission)", "Stop JavaScript execution", "Disable a button"], ans: "Prevent the default browser behavior (like form submission)", marks: 2 },
+    { q: "The mobile-first design principle means:", opts: ["Design for desktop and scale down", "Design for mobile devices first, then scale up", "Use Tailwind only", "Avoid media queries"], ans: "Design for mobile devices first, then scale up", marks: 2 },
+    { q: "Which Git command is used to record changes to the local repository?", opts: ["`git push`", "`git save`", "`git commit`", "`git record`"], ans: "`git commit`", marks: 2 }
+  ];
+
+  const fillData = [
+    { q: "In CSS, the `grid-template-columns` property defines the number and size of __________.", ans: ["columns", "column", "grid columns"], marks: 1 },
+    { q: "Tailwind uses a configuration file named __________ to customize themes.", ans: ["tailwind.config.js", "tailwind config", "config.js"], marks: 1 },
+    { q: "In JavaScript, arrays are declared using square brackets like __________.", ans: ["[]", "[ ]", "brackets"], marks: 1 },
+    { q: "The `addEventListener()` method is used to attach __________ to DOM elements.", ans: ["events", "event handlers", "event listeners", "listeners"], marks: 1 },
+    { q: "Accessibility ensures that a website can be used by people with __________.", ans: ["disabilities", "disability", "different abilities"], marks: 1 }
+  ];
+
+  const tfData = [
+    { q: "In Flexbox, `justify-content` controls alignment along the cross axis.", ans: "FALSE", marks: 1 },
+    { q: "Tailwind's responsive utilities (like `md:text-lg`) apply styles based on breakpoints.", ans: "TRUE", marks: 1 },
+    { q: "`const` variables in JavaScript can be reassigned after initialization.", ans: "FALSE", marks: 1 },
+    { q: "The DOM updates in real-time as users interact with a webpage.", ans: "TRUE", marks: 1 },
+    { q: "A clean Git commit message should describe what changes were made and why.", ans: "TRUE", marks: 1 }
+  ];
+
+  const codeData = [
+    { q: "CSS Layout Challenge: Create a two-column layout where the left column is 30% width (sidebar) and the right column is 70% width (main content). The layout should be responsive using Flexbox or Grid.", ans: ["flexbox", "flex", "grid", "30%", "70%", "display"], marks: 4, type: "css" },
+    { q: "Tailwind Component: Write the HTML using Tailwind CSS classes to create a centered card with white background, rounded corners, shadow, padding of `p-6`, and responsive width (`w-full md:w-1/2`).", ans: ["bg-white", "rounded", "shadow", "p-6", "w-full", "md:w-1/2"], marks: 4, type: "html" },
+    { q: "JavaScript Logic: Write a function that takes an array of numbers and returns the sum of all even numbers. Example: `sumEven([1,2,3,4,5,6]) → 12`", ans: ["function", "return", "even", "%", "sum"], marks: 4, type: "javascript" },
+    { q: 'DOM Manipulation: Create a button with the text "Click Me". When clicked, it should add a new `<p>` element saying "Button Clicked!" inside a container `<div id="output"></div>`.', ans: ["button", "onclick", "createElement", "appendChild", "getElementById"], marks: 4, type: "javascript" },
+{ 
+  q: "Debug the Code: The following code has errors. Find and fix them:\n\nCode:\nbutton onclick equals showMsg Click button\nscript\nfunction showMsg (missing parentheses)\ndocument.getelementById demo innerHTML equals Hello (wrong method name)\nscript\np id equals demo p\n\nErrors:\n1. Function needs parentheses after showMsg\n2. getElementById has wrong capitalization (getelementById)\n\nWhat needs to be fixed?", 
+  ans: ["()", "getElementById", "parentheses", "function showMsg()"], 
+  marks: 4, 
+  type: "javascript" 
+}
+  ];
+
+  // ==================== STATE ====================
+  const allQuestions = [
+    ...mcqData.map((q, i) => ({...q, section: 'mcq', index: i})),
+    ...fillData.map((q, i) => ({...q, section: 'fill', index: i})),
+    ...tfData.map((q, i) => ({...q, section: 'tf', index: i})),
+    ...codeData.map((q, i) => ({...q, section: 'code', index: i}))
+  ];
+
+  let currentQuestionIndex = 0;
+  let userAnswers = {};
+  let examDuration = 90 * 60;
+  let timerInterval;
+  let examSubmitted = false;
+  const totalQuestionsCount = allQuestions.length;
+
+  // ==================== DOM ELEMENTS ====================
+  const questionContainer = document.getElementById('questionContainer');
+  const questionProgress = document.getElementById('questionProgress');
+  const mainProgressBar = document.getElementById('mainProgressBar');
+  const progressPercent = document.getElementById('progressPercent');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const answeredCount = document.getElementById('answeredCount');
+  const timerEl = document.getElementById('timer');
+  const timerCard = document.getElementById('timerCard');
+  const btnPrevious = document.getElementById('btnPrevious');
+  const btnNext = document.getElementById('btnNext');
+  const navigationButtons = document.getElementById('navigationButtons');
+  const submitSection = document.getElementById('submitSection');
+  const submitBtn = document.getElementById('submitBtn');
+  const resultsSection = document.getElementById('resultsSection');
+  const correctCountEl = document.getElementById('correctCount');
+  const totalQuestionsEl = document.getElementById('totalQuestions');
+  const totalMarksEl = document.getElementById('totalMarks');
+  const percentageEl = document.getElementById('percentage');
+  const passMessage = document.getElementById('passMessage');
+  const failMessage = document.getElementById('failMessage');
+  const retakeBtn = document.getElementById('retakeBtn');
+  const certificateBtn = document.getElementById('certificateBtn');
+
+  // ==================== UTILITIES ====================
+  const escapeHTML = (str) => String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // ==================== TIMER ====================
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      examDuration--;
+      timerEl.textContent = formatTime(examDuration);
+      
+      if (examDuration <= 300) {
+        timerEl.classList.add('text-red-600', 'font-bold');
+      }
+      
+      if (examDuration <= 0) {
+        clearInterval(timerInterval);
+        alert('⏰ Time is up! Your exam will be auto-submitted.');
+        submitExam();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+  }
+
+  // ==================== PROGRESS ====================
+  function updateProgress() {
+    const answered = Object.keys(userAnswers).filter(key => {
+      const val = userAnswers[key];
+      return val && val.toString().trim() !== '';
+    }).length;
+    
+    const percent = Math.round((answered / totalQuestionsCount) * 100);
+    mainProgressBar.style.width = percent + '%';
+    progressPercent.textContent = percent + '%';
+    scoreDisplay.textContent = percent + '%';
+    answeredCount.textContent = answered;
+    
+    renderQuestionProgress();
+  }
+
+  function renderQuestionProgress() {
+    questionProgress.innerHTML = '';
+    allQuestions.forEach((q, idx) => {
+      const key = q.section + q.index;
+      const hasAnswer = userAnswers[key] && userAnswers[key].toString().trim() !== '';
+      
+      const div = document.createElement('div');
+      div.className = 'progress-indicator';
+      
+      if (idx === currentQuestionIndex) {
+        div.classList.add('current');
+      } else if (hasAnswer) {
+        div.classList.add('correct');
+      } else {
+        div.classList.add('unanswered');
+      }
+      
+      const icon = document.createElement('span');
+      if (idx === currentQuestionIndex) {
+        icon.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="4"/></svg>`;
+      } else if (hasAnswer) {
+        icon.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>`;
+      } else {
+        icon.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/></svg>`;
+      }
+      
+      const text = document.createElement('span');
+      text.textContent = `Question ${idx + 1}`;
+      
+      div.appendChild(icon);
+      div.appendChild(text);
+      div.style.cursor = 'pointer';
+      
+      div.addEventListener('click', () => {
+        if (!examSubmitted) {
+          currentQuestionIndex = idx;
+          renderQuestion();
+          updateNavButtons();
+          updateProgress();
+        }
+      });
+      
+      questionProgress.appendChild(div);
+    });
+  }
+
+  // ==================== RENDER QUESTION ====================
+  function renderQuestion() {
+    const q = allQuestions[currentQuestionIndex];
+    const key = q.section + q.index;
+    const savedAnswer = userAnswers[key] || '';
+    
+    let html = `
+      <div class="mb-6">
+        <p class="text-sm font-semibold text-gray-500 mb-2">Question ${currentQuestionIndex + 1}/${totalQuestionsCount}</p>
+        <h3 class="text-xl font-bold text-gray-900 mb-4 whitespace-pre-wrap leading-relaxed">${escapeHTML(q.q)}</h3>
+        ${q.marks > 1 ? `<p class="text-sm text-blue-600 font-medium mb-4">${q.marks} Marks</p>` : ''}
+      </div>
+    `;
+
+    if (q.section === 'mcq') {
+      html += '<div class="space-y-3">';
+      q.opts.forEach((opt, idx) => {
+        const isSelected = savedAnswer === opt;
+        html += `
+          <div class="option-btn ${isSelected ? 'selected' : ''} ${examSubmitted ? 'disabled' : ''} rounded-lg p-4" data-value="${escapeHTML(opt)}">
+            ${escapeHTML(opt)}
+          </div>`;
+      });
+      html += '</div>';
+    } else if (q.section === 'fill') {
+      html += `
+        <div>
+          <input type="text" id="fillInput" value="${escapeHTML(savedAnswer)}" placeholder="Type your answer here..." class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition-all" ${examSubmitted ? 'disabled' : ''} />
+        </div>`;
+    } else if (q.section === 'tf') {
+      const options = ["TRUE", "FALSE"];
+      html += '<div class="space-y-3">';
+      options.forEach(opt => {
+        const isSelected = savedAnswer === opt;
+        html += `
+          <div class="option-btn ${isSelected ? 'selected' : ''} ${examSubmitted ? 'disabled' : ''} rounded-lg p-4" data-value="${opt}">
+            ${opt}
+          </div>`;
+      });
+      html += '</div>';
+    } else if (q.section === 'code') {
+      html += `
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Write your code:</label>
+          <textarea id="codeInput" rows="12" placeholder="Write your code here..." spellcheck="false" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-mono text-sm resize-y focus:outline-none focus:border-blue-600 transition-all" ${examSubmitted ? 'disabled' : ''}>${escapeHTML(savedAnswer)}</textarea>
+        </div>`;
+    }
+
+    questionContainer.innerHTML = html;
+
+    if (!examSubmitted) {
+      if (q.section === 'mcq' || q.section === 'tf') {
+        questionContainer.querySelectorAll('.option-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            if (examSubmitted) return;
+            questionContainer.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            userAnswers[key] = this.dataset.value;
+            updateProgress();
+          });
+        });
+      } else if (q.section === 'fill') {
+        const input = document.getElementById('fillInput');
+        input.addEventListener('input', function() {
+          userAnswers[key] = this.value.trim();
+          updateProgress();
+        });
+      } else if (q.section === 'code') {
+        const textarea = document.getElementById('codeInput');
+        textarea.addEventListener('input', function() {
+          userAnswers[key] = this.value.trim();
+          updateProgress();
+        });
+      }
+    }
+  }
+
+  function updateNavButtons() {
+    btnPrevious.disabled = currentQuestionIndex === 0;
+    btnNext.disabled = currentQuestionIndex === totalQuestionsCount - 1;
+    
+    if (currentQuestionIndex === 0) {
+      btnPrevious.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      btnPrevious.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+    
+    if (currentQuestionIndex === totalQuestionsCount - 1) {
+      btnNext.classList.add('hidden');
+      submitSection.classList.remove('hidden');
+    } else {
+      btnNext.classList.remove('hidden');
+      submitSection.classList.add('hidden');
+    }
+  }
+
+  // ==================== CHECK ANSWER ====================
+  function checkAnswer(q, userAns) {
+    let isCorrect = false;
+    let marks = 0;
+
+    if (q.section === 'mcq' || q.section === 'tf') {
+      isCorrect = userAns === q.ans;
+      marks = isCorrect ? q.marks : 0;
+    } else if (q.section === 'fill') {
+      const normalized = (userAns || '').toLowerCase().trim();
+      isCorrect = q.ans.some(a => normalized.includes(a.toLowerCase()));
+      marks = isCorrect ? q.marks : 0;
+    } else if (q.section === 'code') {
+      const normalized = (userAns || '').toLowerCase();
+      const matchCount = q.ans.filter(keyword => normalized.includes(keyword.toLowerCase())).length;
+      marks = Math.floor((matchCount / q.ans.length) * q.marks);
+      isCorrect = marks > 0;
+    }
+
+    return { isCorrect, marks };
+  }
+
+  // ==================== SUBMIT ====================
+  function submitExam() {
+    if (examSubmitted) return;
+
+    const unanswered = totalQuestionsCount - Object.keys(userAnswers).filter(k => userAnswers[k] && userAnswers[k].toString().trim() !== '').length;
+    
+    if (unanswered > 0) {
+      if (!confirm(`You have ${unanswered} unanswered question(s). Do you want to submit anyway?`)) {
+        return;
+      }
+    }
+
+    examSubmitted = true;
+    stopTimer();
+
+    let correctCount = 0;
+    let totalMarks = 0;
+
+    allQuestions.forEach(q => {
+      const key = q.section + q.index;
+      const userAns = userAnswers[key];
+      const result = checkAnswer(q, userAns);
+      totalMarks += result.marks;
+      if (result.isCorrect) correctCount++;
+    });
+
+    const percentage = Math.round((correctCount / totalQuestionsCount) * 100);
+
+    correctCountEl.textContent = correctCount;
+    totalQuestionsEl.textContent = totalQuestionsCount;
+    totalMarksEl.textContent = totalMarks;
+    percentageEl.textContent = percentage;
+
+    if (percentage >= 70) {
+      passMessage.classList.remove('hidden');
+      failMessage.classList.add('hidden');
+      certificateBtn.classList.remove('hidden');
+    } else {
+      passMessage.classList.add('hidden');
+      failMessage.classList.remove('hidden');
+      certificateBtn.classList.add('hidden');
+    }
+
+    questionContainer.classList.add('hidden');
+    navigationButtons.classList.add('hidden');
+    submitSection.classList.add('hidden');
+    timerCard.classList.add('hidden');
+    resultsSection.classList.remove('hidden');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ==================== CERTIFICATE ====================
+  function generateCertificate() {
+    const userName = prompt("Enter your name for the certificate:");
+    if (!userName || userName.trim() === '') {
+      alert('Name is required to generate certificate.');
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('landscape');
+
+    doc.setFillColor(245, 247, 250);
+    doc.rect(0, 0, 297, 210, 'F');
+
+    doc.setLineWidth(2);
+    doc.setDrawColor(0, 102, 255);
+    doc.rect(10, 10, 277, 190);
+    
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(100, 150, 255);
+    doc.rect(15, 15, 267, 180);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(32);
+    doc.setTextColor(0, 102, 255);
+    doc.text("CERTIFICATE OF COMPLETION", 148.5, 50, { align: "center" });
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    doc.text("This certifies that", 148.5, 70, { align: "center" });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(26);
+    doc.setTextColor(0, 102, 255);
+    doc.text(userName, 148.5, 90, { align: "center" });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(14);
+    doc.setTextColor(60, 60, 60);
+    doc.text("has successfully completed the", 148.5, 110, { align: "center" });
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text("Frontend Development — Beginner Level", 148.5, 125, { align: "center" });
+
+    const score = totalMarksEl.textContent;
+    const percent = percentageEl.textContent;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(13);
+    doc.text(`Score: ${score}/50 Marks (${percent}%)`, 148.5, 145, { align: "center" });
+
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    doc.setFontSize(11);
+    doc.text(`Date: ${today}`, 148.5, 165, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 120);
+    doc.text("Elavana - By InnerWhispers", 148.5, 185, { align: "center" });
+
+    doc.save(`Certificate_${userName.replace(/\s+/g, '_')}.pdf`);
+    alert('Certificate downloaded successfully!');
+  }
+
+  // ==================== EVENT LISTENERS ====================
+  btnPrevious.addEventListener('click', () => {
+    if (currentQuestionIndex > 0) {
+      currentQuestionIndex--;
+      renderQuestion();
+      updateNavButtons();
+      updateProgress();
+    }
+  });
+
+  btnNext.addEventListener('click', () => {
+    if (currentQuestionIndex < totalQuestionsCount - 1) {
+      currentQuestionIndex++;
+      renderQuestion();
+      updateNavButtons();
+      updateProgress();
+    }
+  });
+
+  submitBtn.addEventListener('click', submitExam);
+  retakeBtn.addEventListener('click', () => location.reload());
+  certificateBtn.addEventListener('click', generateCertificate);
+
+  // ==================== INIT ====================
+  function init() {
+    renderQuestion();
+    updateNavButtons();
+    updateProgress();
+    startTimer();
+    
+    window.addEventListener('beforeunload', (e) => {
+      if (!examSubmitted) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  }
+
+  init();
+</script>
+
+</body>
+</html>

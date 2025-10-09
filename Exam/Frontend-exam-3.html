@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Frontend Development - Intermediate Level: Final Examination</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { -webkit-font-smoothing: antialiased; background-color: #f5f7fa; }
+    .option-btn {
+      transition: all 0.2s ease;
+      cursor: pointer;
+      background: #f0f3f7;
+      border: 2px solid transparent;
+    }
+    .option-btn:hover:not(.disabled) {
+      background: #e8edf3;
+      border-color: #0066ff;
+    }
+    .option-btn.selected {
+      background: #e8f4ff;
+      border-color: #0066ff;
+    }
+    .option-btn.correct {
+      background: #d4edda;
+      border-color: #28a745;
+    }
+    .option-btn.wrong {
+      background: #f8d7da;
+      border-color: #dc3545;
+    }
+    .progress-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .progress-indicator.correct {
+      background: #d4edda;
+      color: #28a745;
+    }
+    .progress-indicator.wrong {
+      background: #f8d7da;
+      color: #dc3545;
+    }
+    .progress-indicator.current {
+      background: #fff;
+      border: 2px solid #0066ff;
+      color: #0066ff;
+    }
+    .progress-indicator.unanswered {
+      background: #fff;
+      border: 2px solid #e0e6ed;
+      color: #6c757d;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #0066ff; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+  <div class="flex gap-8">
+    
+    <!-- MAIN CONTENT -->
+    <main class="flex-1">
+      
+      <!-- Quiz Header -->
+      <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Frontend Development — Intermediate Level: Final Examination</h2>
+        <div class="relative">
+          <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div id="mainProgressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <span id="progressPercent" class="absolute -top-1 right-0 text-sm font-semibold text-gray-900">0%</span>
+        </div>
+      </div>
+
+      <!-- Question Container -->
+      <div id="questionContainer" class="bg-white rounded-lg p-8 shadow-sm mb-6">
+        <!-- Question content will be injected here -->
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div id="navigationButtons" class="flex justify-between">
+        <button id="btnPrevious" class="px-6 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">
+          Previous
+        </button>
+        <button id="btnNext" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all">
+          Next
+        </button>
+      </div>
+
+      <!-- Submit Button -->
+      <div id="submitSection" class="hidden mt-6 text-center">
+        <button id="submitBtn" class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg">
+          Submit Exam
+        </button>
+      </div>
+
+      <!-- Results Section -->
+      <div id="resultsSection" class="hidden bg-white rounded-lg p-8 shadow-sm">
+        <div class="text-center mb-6">
+          <div class="inline-block p-4 bg-green-100 rounded-full mb-4">
+            <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Exam Completed!</h3>
+          <p class="text-gray-600">You've answered <span id="correctCount" class="font-semibold text-green-600">0</span> out of <span id="totalQuestions">25</span> questions correctly.</p>
+        </div>
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between text-gray-700">
+            <span>Total Score:</span>
+            <span class="font-semibold"><span id="totalMarks">0</span>/50 Marks</span>
+          </div>
+          <div class="flex justify-between text-gray-700">
+            <span>Percentage:</span>
+            <span class="font-semibold"><span id="percentage">0</span>%</span>
+          </div>
+        </div>
+        <div id="passMessage" class="hidden mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+          <p class="text-green-800 font-medium text-center">🎉 Congratulations! You passed the exam!</p>
+        </div>
+        <div id="failMessage" class="hidden mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+          <p class="text-red-800 font-medium text-center">Keep practicing! You need 70% to pass.</p>
+        </div>
+        <div class="flex gap-3 justify-center">
+          <button id="retakeBtn" class="px-6 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">
+            Retake Exam
+          </button>
+          <button id="certificateBtn" class="hidden px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all">
+            Download Certificate
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside class="w-80 flex-shrink-0">
+      
+      <!-- Score Card -->
+      <div class="bg-blue-50 rounded-lg p-6 mb-6 text-center">
+        <div class="text-5xl font-bold text-blue-600 mb-2" id="scoreDisplay">0%</div>
+        <p class="text-sm text-gray-600">You got <span id="answeredCount">0</span> answers correct</p>
+      </div>
+
+      <!-- Timer Card -->
+      <div id="timerCard" class="bg-white rounded-lg p-4 mb-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Time Remaining</span>
+          <span id="timer" class="text-xl font-bold text-gray-900">90:00</span>
+        </div>
+      </div>
+
+      <!-- Question Progress -->
+      <div class="bg-white rounded-lg p-4 shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-900 mb-4">Question Progress</h3>
+        <div id="questionProgress" class="space-y-2 max-h-96 overflow-y-auto">
+          <!-- Progress indicators will be injected here -->
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+</div>
+
+<script>
+  // ==================== QUESTION DATA ====================
+  const mcqData = [
+    { 
+      q: "Which of the following correctly describes JavaScript hoisting?", 
+      opts: [
+        "Variables and functions are moved to the top of their scope before execution", 
+        "Variables are deleted before code runs", 
+        "Only functions are hoisted, not variables", 
+        "Only let/const variables are hoisted"
+      ], 
+      ans: "Variables and functions are moved to the top of their scope before execution", 
+      marks: 2 
+    },
+    { 
+      q: "What will be logged to the console?\n\nconsole.log(x);\nvar x = 5;", 
+      opts: ["5", "undefined", "ReferenceError", "null"], 
+      ans: "undefined", 
+      marks: 2 
+    },
+    { 
+      q: "What is the output of the following code?\n\nsetTimeout(() => console.log('A'), 0);\nconsole.log('B');", 
+      opts: ["A B", "B A", "Error", "A only"], 
+      ans: "B A", 
+      marks: 2 
+    },
+    { 
+      q: "The main difference between Promises and Async/Await is:", 
+      opts: [
+        "Promises block code execution; async/await doesn't", 
+        "Async/Await provides a cleaner, synchronous-looking syntax for handling Promises", 
+        "Promises can't handle errors", 
+        "Async/Await doesn't support chaining"
+      ], 
+      ans: "Async/Await provides a cleaner, synchronous-looking syntax for handling Promises", 
+      marks: 2 
+    },
+    { 
+      q: "Which array method returns a new array with only elements that pass a test?", 
+      opts: ["map()", "filter()", "reduce()", "forEach()"], 
+      ans: "filter()", 
+      marks: 2 
+    },
+    { 
+      q: "The Fetch API returns a:", 
+      opts: ["JSON object", "Promise", "Callback", "Response synchronously"], 
+      ans: "Promise", 
+      marks: 2 
+    },
+    { 
+      q: "What does JSON.stringify() do?", 
+      opts: [
+        "Converts a string to an object", 
+        "Converts an object into a JSON string", 
+        "Parses an array", 
+        "Sends data to localStorage automatically"
+      ], 
+      ans: "Converts an object into a JSON string", 
+      marks: 2 
+    },
+    { 
+      q: "Which statement about Local Storage is true?", 
+      opts: [
+        "Data is cleared when the page reloads", 
+        "Data persists even after browser restart", 
+        "It only stores numbers", 
+        "It's limited to 1 MB of data"
+      ], 
+      ans: "Data persists even after browser restart", 
+      marks: 2 
+    },
+    { 
+      q: "What is Event Delegation used for?", 
+      opts: [
+        "To handle events by attaching a listener to a parent instead of multiple children", 
+        "To delegate styles dynamically", 
+        "To stop event propagation", 
+        "To trigger multiple listeners at once"
+      ], 
+      ans: "To handle events by attaching a listener to a parent instead of multiple children", 
+      marks: 2 
+    },
+    { 
+      q: "In Tailwind, enabling dark mode can be done by:", 
+      opts: [
+        "Using bg-dark class", 
+        "Adding darkMode: 'class' in tailwind.config.js", 
+        "Installing a plugin", 
+        "It's not supported"
+      ], 
+      ans: "Adding darkMode: 'class' in tailwind.config.js", 
+      marks: 2 
+    }
+  ];
+
+  const fillData = [
+    { 
+      q: "JavaScript's event loop allows handling of __________ operations without blocking execution.", 
+      ans: ["asynchronous", "async", "non-blocking"], 
+      marks: 1 
+    },
+    { 
+      q: "A Promise can have three states: pending, fulfilled, and __________.", 
+      ans: ["rejected"], 
+      marks: 1 
+    },
+    { 
+      q: "The method localStorage.removeItem('key') is used to __________ stored data.", 
+      ans: ["delete", "remove", "clear"], 
+      marks: 1 
+    },
+    { 
+      q: "The reduce() method executes a reducer function on each element to produce a single __________.", 
+      ans: ["value", "output", "result"], 
+      marks: 1 
+    },
+    { 
+      q: "Dark mode themes are typically toggled by changing the document's __________ or adding a CSS class.", 
+      ans: ["class", "className", "classList", "attribute"], 
+      marks: 1 
+    }
+  ];
+
+  const tfData = [
+    { 
+      q: "The await keyword can only be used inside an async function.", 
+      ans: "TRUE", 
+      marks: 1 
+    },
+    { 
+      q: "JSON.parse() is used to convert a string into an object.", 
+      ans: "TRUE", 
+      marks: 1 
+    },
+    { 
+      q: "The Fetch API can only send GET requests.", 
+      ans: "FALSE", 
+      marks: 1 
+    },
+    { 
+      q: "Local Storage supports storing JavaScript objects directly without conversion.", 
+      ans: "FALSE", 
+      marks: 1 
+    },
+    { 
+      q: "Event delegation helps improve performance by minimizing the number of event listeners.", 
+      ans: "TRUE", 
+      marks: 1 
+    }
+  ];
+
+  const codeData = [
+    { 
+      q: "Promise & Async/Await Conversion\n\nConvert the following Promise-based code into async/await syntax:\n\nfetch('https://api.example.com/data')\n  .then(res => res.json())\n  .then(data => console.log(data))\n  .catch(err => console.error(err));", 
+      ans: ["async", "await", "fetch", "try", "catch"], 
+      marks: 4, 
+      type: "javascript" 
+    },
+    { 
+      q: "API Integration Task\n\nWrite JavaScript to fetch data from https://jsonplaceholder.typicode.com/users and display each user's name and email inside an unordered list in the DOM.", 
+      ans: ["fetch", "users", "forEach", "createElement", "appendChild"], 
+      marks: 4, 
+      type: "javascript" 
+    },
+    { 
+      q: "Local Storage Application\n\nCreate a simple script that:\n- Saves a user's name to localStorage when they submit a form\n- Displays 'Welcome, [Name]!' on page reload if the data exists", 
+      ans: ["localStorage", "setItem", "getItem", "submit", "addEventListener"], 
+      marks: 4, 
+      type: "javascript" 
+    },
+    { 
+      q: "Array Manipulation\n\nUsing JavaScript, return a new array containing only names with more than 4 characters:\n\nconst names = ['Ava', 'Leo', 'Sophia', 'Kai', 'Isabella'];", 
+      ans: ["filter", "length", ">", "4", "return"], 
+      marks: 4, 
+      type: "javascript" 
+    },
+    { 
+      q: "Debug This Code\n\nFind and fix the errors:\n\nasync function getData() {\n  let res = fetch('https://api.example.com/data');\n  let data = await res.json();\n  console.log(data)\n}\ngetData();\n\nHint: Something is missing before fetch() is awaited.", 
+      ans: ["await", "await fetch", "missing await"], 
+      marks: 4, 
+      type: "javascript" 
+    }
+  ];
+
+  // ==================== STATE ====================
+  const allQuestions = [
+    ...mcqData.map((q, i) => ({...q, section: 'mcq', index: i})),
+    ...fillData.map((q, i) => ({...q, section: 'fill', index: i})),
+    ...tfData.map((q, i) => ({...q, section: 'tf', index: i})),
+    ...codeData.map((q, i) => ({...q, section: 'code', index: i}))
+  ];
+
+  let currentQuestionIndex = 0;
+  let userAnswers = {};
+  let examDuration = 90 * 60;
+  let timerInterval;
+  let examSubmitted = false;
+  const totalQuestionsCount = allQuestions.length;
+
+  // ==================== DOM ELEMENTS ====================
+  const questionContainer = document.getElementById('questionContainer');
+  const questionProgress = document.getElementById('questionProgress');
+  const mainProgressBar = document.getElementById('mainProgressBar');
+  const progressPercent = document.getElementById('progressPercent');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const answeredCount = document.getElementById('answeredCount');
+  const timerEl = document.getElementById('timer');
+  const timerCard = document.getElementById('timerCard');
+  const btnPrevious = document.getElementById('btnPrevious');
+  const btnNext = document.getElementById('btnNext');
+  const navigationButtons = document.getElementById('navigationButtons');
+  const submitSection = document.getElementById('submitSection');
+  const submitBtn = document.getElementById('submitBtn');
+  const resultsSection = document.getElementById('resultsSection');
+  const correctCountEl = document.getElementById('correctCount');
+  const totalQuestionsEl = document.getElementById('totalQuestions');
+  const totalMarksEl = document.getElementById('totalMarks');
+  const percentageEl = document.getElementById('percentage');
+  const passMessage = document.getElementById('passMessage');
+  const failMessage = document.getElementById('failMessage');
+  const retakeBtn = document.getElementById('retakeBtn');
+  const certificateBtn = document.getElementById('certificateBtn');
+
+  // ==================== UTILITIES ====================
+  const escapeHTML = (str) => String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // ==================== TIMER ====================
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      examDuration--;
+      timerEl.textContent = formatTime(examDuration);
+      
+      if (examDuration <= 300) {
+        timerEl.classList.add('text-red-600', 'font-bold');
+      }
+      
+      if (examDuration <= 0) {
+        clearInterval(timerInterval);
+        alert('⏰ Time is up! Your exam will be auto-submitted.');
+        submitExam();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+  }
+
+  // ==================== PROGRESS ====================
+  function updateProgress() {
+    const answered = Object.keys(userAnswers).filter(key => {
+      const val = userAnswers[key];
+      return val && val.toString().trim() !== '';
+    }).length;
+    
+    const percent = Math.round((answered / totalQuestionsCount) * 100);
+    mainProgressBar.style.width = percent + '%';
+    progressPercent.textContent = percent + '%';
+    scoreDisplay.textContent = percent + '%';
+    answeredCount.textContent = answered;
+    
+    renderQuestionProgress();
+  }
+
+  function renderQuestionProgress() {
+    questionProgress.innerHTML = '';
+    allQuestions.forEach((q, idx) => {
+      const key = q.section + q.index;
+      const hasAnswer = userAnswers[key] && userAnswers[key].toString().trim() !== '';
+      
+      const div = document.createElement('div');
+      div.className = 'progress-indicator';
+      
+      if (idx === currentQuestionIndex) {
+        div.classList.add('current');
+      } else if (hasAnswer) {
+        div.classList.add('correct');
+      } else {
+        div.classList.add('unanswered');
+      }
+      
+      const icon = document.createElement('span');
+      if (idx === currentQuestionIndex) {
+        icon.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="4"/></svg>`;
+      } else if (hasAnswer) {
+        icon.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>`;
+      } else {
+        icon.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/></svg>`;
+      }
+      
+      const text = document.createElement('span');
+      text.textContent = `Question ${idx + 1}`;
+      
+      div.appendChild(icon);
+      div.appendChild(text);
+      div.style.cursor = 'pointer';
+      
+      div.addEventListener('click', () => {
+        if (!examSubmitted) {
+          currentQuestionIndex = idx;
+          renderQuestion();
+          updateNavButtons();
+          updateProgress();
+        }
+      });
+      
+      questionProgress.appendChild(div);
+    });
+  }
+
+  // ==================== RENDER QUESTION ====================
+  function renderQuestion() {
+    const q = allQuestions[currentQuestionIndex];
+    const key = q.section + q.index;
+    const savedAnswer = userAnswers[key] || '';
+    
+    let html = `
+      <div class="mb-6">
+        <p class="text-sm font-semibold text-gray-500 mb-2">Question ${currentQuestionIndex + 1}/${totalQuestionsCount}</p>
+        <h3 class="text-xl font-bold text-gray-900 mb-4 whitespace-pre-wrap leading-relaxed">${escapeHTML(q.q)}</h3>
+        ${q.marks > 1 ? `<p class="text-sm text-blue-600 font-medium mb-4">${q.marks} Marks</p>` : ''}
+      </div>
+    `;
+
+    if (q.section === 'mcq') {
+      html += '<div class="space-y-3">';
+      q.opts.forEach((opt, idx) => {
+        const isSelected = savedAnswer === opt;
+        html += `
+          <div class="option-btn ${isSelected ? 'selected' : ''} ${examSubmitted ? 'disabled' : ''} rounded-lg p-4" data-value="${escapeHTML(opt)}">
+            ${escapeHTML(opt)}
+          </div>`;
+      });
+      html += '</div>';
+    } else if (q.section === 'fill') {
+      html += `
+        <div>
+          <input type="text" id="fillInput" value="${escapeHTML(savedAnswer)}" placeholder="Type your answer here..." class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition-all" ${examSubmitted ? 'disabled' : ''} />
+        </div>`;
+    } else if (q.section === 'tf') {
+      const options = ["TRUE", "FALSE"];
+      html += '<div class="space-y-3">';
+      options.forEach(opt => {
+        const isSelected = savedAnswer === opt;
+        html += `
+          <div class="option-btn ${isSelected ? 'selected' : ''} ${examSubmitted ? 'disabled' : ''} rounded-lg p-4" data-value="${opt}">
+            ${opt}
+          </div>`;
+      });
+      html += '</div>';
+    } else if (q.section === 'code') {
+      html += `
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Write your code:</label>
+          <textarea id="codeInput" rows="12" placeholder="Write your code here..." spellcheck="false" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-mono text-sm resize-y focus:outline-none focus:border-blue-600 transition-all" ${examSubmitted ? 'disabled' : ''}>${escapeHTML(savedAnswer)}</textarea>
+        </div>`;
+    }
+
+    questionContainer.innerHTML = html;
+
+    if (!examSubmitted) {
+      if (q.section === 'mcq' || q.section === 'tf') {
+        questionContainer.querySelectorAll('.option-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            if (examSubmitted) return;
+            questionContainer.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            userAnswers[key] = this.dataset.value;
+            updateProgress();
+          });
+        });
+      } else if (q.section === 'fill') {
+        const input = document.getElementById('fillInput');
+        input.addEventListener('input', function() {
+          userAnswers[key] = this.value.trim();
+          updateProgress();
+        });
+      } else if (q.section === 'code') {
+        const textarea = document.getElementById('codeInput');
+        textarea.addEventListener('input', function() {
+          userAnswers[key] = this.value.trim();
+          updateProgress();
+        });
+      }
+    }
+  }
+
+  function updateNavButtons() {
+    btnPrevious.disabled = currentQuestionIndex === 0;
+    btnNext.disabled = currentQuestionIndex === totalQuestionsCount - 1;
+    
+    if (currentQuestionIndex === 0) {
+      btnPrevious.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      btnPrevious.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+    
+    if (currentQuestionIndex === totalQuestionsCount - 1) {
+      btnNext.classList.add('hidden');
+      submitSection.classList.remove('hidden');
+    } else {
+      btnNext.classList.remove('hidden');
+      submitSection.classList.add('hidden');
+    }
+  }
+
+  // ==================== CHECK ANSWER ====================
+  function checkAnswer(q, userAns) {
+    let isCorrect = false;
+    let marks = 0;
+
+    if (q.section === 'mcq' || q.section === 'tf') {
+      isCorrect = userAns === q.ans;
+      marks = isCorrect ? q.marks : 0;
+    } else if (q.section === 'fill') {
+      const normalized = (userAns || '').toLowerCase().trim();
+      isCorrect = q.ans.some(a => normalized.includes(a.toLowerCase()));
+      marks = isCorrect ? q.marks : 0;
+    } else if (q.section === 'code') {
+      const normalized = (userAns || '').toLowerCase();
+      const matchCount = q.ans.filter(keyword => normalized.includes(keyword.toLowerCase())).length;
+      marks = Math.floor((matchCount / q.ans.length) * q.marks);
+      isCorrect = marks > 0;
+    }
+
+    return { isCorrect, marks };
+  }
+
+  // ==================== SUBMIT ====================
+  function submitExam() {
+    if (examSubmitted) return;
+
+    const unanswered = totalQuestionsCount - Object.keys(userAnswers).filter(k => userAnswers[k] && userAnswers[k].toString().trim() !== '').length;
+    
+    if (unanswered > 0) {
+      if (!confirm(`You have ${unanswered} unanswered question(s). Do you want to submit anyway?`)) {
+        return;
+      }
+    }
+
+    examSubmitted = true;
+    stopTimer();
+
+    let correctCount = 0;
+    let totalMarks = 0;
+
+    allQuestions.forEach(q => {
+      const key = q.section + q.index;
+      const userAns = userAnswers[key];
+      const result = checkAnswer(q, userAns);
+      totalMarks += result.marks;
+      if (result.isCorrect) correctCount++;
+    });
+
+    const percentage = Math.round((correctCount / totalQuestionsCount) * 100);
+
+    correctCountEl.textContent = correctCount;
+    totalQuestionsEl.textContent = totalQuestionsCount;
+    totalMarksEl.textContent = totalMarks;
+    percentageEl.textContent = percentage;
+
+    if (percentage >= 70) {
+      passMessage.classList.remove('hidden');
+      failMessage.classList.add('hidden');
+      certificateBtn.classList.remove('hidden');
+    } else {
+      passMessage.classList.add('hidden');
+      failMessage.classList.remove('hidden');
+      certificateBtn.classList.add('hidden');
+    }
+
+    questionContainer.classList.add('hidden');
+    navigationButtons.classList.add('hidden');
+    submitSection.classList.add('hidden');
+    timerCard.classList.add('hidden');
+    resultsSection.classList.remove('hidden');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ==================== CERTIFICATE ====================
+  function generateCertificate() {
+    const userName = prompt("Enter your name for the certificate:");
+    if (!userName || userName.trim() === '') {
+      alert('Name is required to generate certificate.');
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('landscape');
+
+    doc.setFillColor(245, 247, 250);
+    doc.rect(0, 0, 297, 210, 'F');
+
+    doc.setLineWidth(2);
+    doc.setDrawColor(0, 102, 255);
+    doc.rect(10, 10, 277, 190);
+    
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(100, 150, 255);
+    doc.rect(15, 15, 267, 180);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(32);
+    doc.setTextColor(0, 102, 255);
+    doc.text("CERTIFICATE OF COMPLETION", 148.5, 50, { align: "center" });
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    doc.text("This certifies that", 148.5, 70, { align: "center" });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(26);
+    doc.setTextColor(0, 102, 255);
+    doc.text(userName, 148.5, 90, { align: "center" });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(14);
+    doc.setTextColor(60, 60, 60);
+    doc.text("has successfully completed the", 148.5, 110, { align: "center" });
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text("Frontend Development — Intermediate Level", 148.5, 125, { align: "center" });
+
+    const score = totalMarksEl.textContent;
+    const percent = percentageEl.textContent;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(13);
+    doc.text(`Score: ${score}/50 Marks (${percent}%)`, 148.5, 145, { align: "center" });
+
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    doc.setFontSize(11);
+    doc.text(`Date: ${today}`, 148.5, 165, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 120);
+    doc.text("Elavana - By InnerWhispers", 148.5, 185, { align: "center" });
+
+    doc.save(`Certificate_${userName.replace(/\s+/g, '_')}_Intermediate.pdf`);
+    alert('Certificate downloaded successfully!');
+  }
+
+  // ==================== EVENT LISTENERS ====================
+  btnPrevious.addEventListener('click', () => {
+    if (currentQuestionIndex > 0) {
+      currentQuestionIndex--;
+      renderQuestion();
+      updateNavButtons();
+      updateProgress();
+    }
+  });
+
+  btnNext.addEventListener('click', () => {
+    if (currentQuestionIndex < totalQuestionsCount - 1) {
+      currentQuestionIndex++;
+      renderQuestion();
+      updateNavButtons();
+      updateProgress();
+    }
+  });
+
+  submitBtn.addEventListener('click', submitExam);
+  retakeBtn.addEventListener('click', () => location.reload());
+  certificateBtn.addEventListener('click', generateCertificate);
+
+  // ==================== INIT ====================
+  function init() {
+    renderQuestion();
+    updateNavButtons();
+    updateProgress();
+    startTimer();
+    
+    window.addEventListener('beforeunload', (e) => {
+      if (!examSubmitted) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  }
+
+  init();
+</script>
+
+</body>
+</html>
