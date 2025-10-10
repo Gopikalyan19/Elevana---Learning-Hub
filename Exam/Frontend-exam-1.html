@@ -546,68 +546,174 @@
   }
 
   // ==================== CERTIFICATE ====================
-  function generateCertificate() {
-    const userName = prompt("Enter your name for the certificate:");
-    if (!userName || userName.trim() === '') {
-      alert('Name is required to generate certificate.');
-      return;
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('landscape');
-
-    doc.setFillColor(245, 247, 250);
-    doc.rect(0, 0, 297, 210, 'F');
-
-    doc.setLineWidth(2);
-    doc.setDrawColor(0, 102, 255);
-    doc.rect(10, 10, 277, 190);
-    
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(100, 150, 255);
-    doc.rect(15, 15, 267, 180);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(32);
-    doc.setTextColor(0, 102, 255);
-    doc.text("CERTIFICATE OF COMPLETION", 148.5, 50, { align: "center" });
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    doc.text("This certifies that", 148.5, 70, { align: "center" });
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(26);
-    doc.setTextColor(0, 102, 255);
-    doc.text(userName, 148.5, 90, { align: "center" });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(14);
-    doc.setTextColor(60, 60, 60);
-    doc.text("has successfully completed the", 148.5, 110, { align: "center" });
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text("Frontend Development — Introduction ", 148.5, 125, { align: "center" });
-
-    const score = totalMarksEl.textContent;
-    const percent = percentageEl.textContent;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(13);
-    doc.text(`Score: ${score}/50 Marks (${percent}%)`, 148.5, 145, { align: "center" });
-
-    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    doc.setFontSize(11);
-    doc.text(`Date: ${today}`, 148.5, 165, { align: "center" });
-
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 120);
-    doc.text("Elavana - By InnerWhispers", 148.5, 185, { align: "center" });
-
-    doc.save(`Certificate_${userName.replace(/\s+/g, '_')}.pdf`);
-    alert('Certificate downloaded successfully!');
-  }
+ function generateCertificate() {
+  const userName = prompt("Enter your name for the certificate:");
+  if (!userName || userName.trim() === '') return alert('Name is required to generate certificate.');
+  
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('portrait');
+  
+  // White background
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, 210, 297, 'F');
+  
+  // Colorful header bar - thin stripes at top
+  const colors = [
+    [123, 44, 191],  // Purple
+    [59, 130, 246],  // Blue  
+    [239, 68, 68],   // Red
+    [249, 115, 22],  // Orange
+    [234, 179, 8],   // Yellow
+    [34, 197, 94]    // Green
+  ];
+  
+  const barWidth = 210 / colors.length;
+  colors.forEach((color, i) => {
+    doc.setFillColor(color[0], color[1], color[2]);
+    doc.rect(i * barWidth, 0, barWidth, 5, 'F');
+  });
+  
+  // Large "Certificate" text on left side
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(40);
+  doc.setTextColor(0, 0, 0);
+  doc.text("Certificate", 25, 48);
+  doc.text("", 25, 73);
+  
+  // Vertical colored stripe on right
+  doc.setFillColor(123, 44, 191); // Purple
+  doc.rect(130, 28, 3, 35, 'F');
+  doc.setFillColor(239, 68, 68); // Red
+  doc.rect(134, 28, 3, 35, 'F');
+  doc.setFillColor(249, 115, 22); // Orange
+  doc.rect(138, 28, 3, 35, 'F');
+  
+  // Recognition text box on right - properly positioned within certificate
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(80, 80, 80);
+  const recognitionLines = [
+    "In recognition of",
+    "your excellent completion",
+    "of the course in"
+  ];
+  let yPos = 35;
+  recognitionLines.forEach(line => {
+    doc.text(line, 145, yPos);
+    yPos += 5;
+  });
+  
+  // Bold course name
+  doc.setFont('helvetica', 'bold');
+  doc.text("Frontend Development - Introduction", 145, yPos);
+  yPos += 5;
+  
+  // Continue with normal text
+  doc.setFont('helvetica', 'normal');
+  const remainingLines = [
+    "and demonstrating great",
+    "skills in practical courses."
+  ];
+  remainingLines.forEach(line => {
+    doc.text(line, 145, yPos);
+    yPos += 5;
+  });
+  
+  // "Awarded to" label - lighter and smaller
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(140, 140, 140);
+  doc.text("Awarded to", 25, 115);
+  
+  // Name with underline - larger and bold
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(0, 0, 0);
+  doc.text(userName, 25, 135);
+  
+  // Underline for name - thin and elegant
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
+  doc.line(25, 138, 190, 138);
+  
+  // Score information - clean and visible
+  const score = totalMarksEl.textContent;
+  const percent = percentageEl.textContent;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Score: ${score}/50 Marks (${percent}%)`, 25, 150);
+  
+  // Date - below score
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(140, 140, 140);
+  doc.text(today, 25, 162);
+  
+  // Attribution on right - at the bottom
+  doc.setFontSize(8);
+  doc.setTextColor(160, 160, 160);
+  doc.text("Elavana - By InnerWhispers", 185, 162, { align: 'right' });
+  
+  // Signature name - handwriting style
+  doc.setFont('times', 'italic');
+  doc.setFontSize(14);
+  doc.setTextColor(60, 60, 60);
+  doc.text("Gopi Kalyan", 165, 169, { align: 'center' });
+  
+  // Signature line below name
+  doc.setDrawColor(160, 160, 160);
+  doc.setLineWidth(0.3);
+  doc.line(145, 170, 185, 170);
+  
+  // Signature label
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(140, 140, 140);
+  doc.text("Authorized Signature", 165, 175, { align: 'center' });
+  
+  // Abstract geometric pattern at bottom - adjusted positions
+  // Large purple rectangle left
+  doc.setFillColor(123, 44, 191);
+  doc.rect(18, 200, 28, 75, 'F');
+  
+  // Orange circle top middle
+  doc.setFillColor(249, 115, 22);
+  doc.circle(115, 215, 18, 'F');
+  
+  // Orange rectangle top right
+  doc.rect(145, 200, 26, 26, 'F');
+  
+  // Blue circle left middle
+  doc.setFillColor(59, 130, 246);
+  doc.circle(72, 238, 20, 'F');
+  
+  // Large light purple circle bottom left
+  doc.setFillColor(216, 180, 254);
+  doc.circle(52, 255, 28, 'F');
+  
+  // Large blue circle bottom right
+  doc.setFillColor(147, 197, 253);
+  doc.circle(165, 245, 26, 'F');
+  
+  // Dark navy rectangles
+  doc.setFillColor(30, 41, 59);
+  doc.rect(50, 200, 15, 15, 'F');
+  doc.rect(92, 200, 13, 13, 'F');
+  doc.rect(98, 252, 18, 23, 'F');
+  
+  // Purple rectangle bottom right
+  doc.setFillColor(139, 92, 246);
+  doc.rect(135, 250, 20, 25, 'F');
+  
+  // Small orange squares
+  doc.setFillColor(251, 146, 60);
+  doc.rect(127, 265, 11, 10, 'F');
+  
+  doc.save(`Certificate_${userName.replace(/\s+/g, '_')}.pdf`);
+  alert('Certificate downloaded successfully!');
+}
 
   // ==================== EVENT LISTENERS ====================
   btnPrevious.addEventListener('click', () => {

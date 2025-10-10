@@ -510,7 +510,7 @@ function generateCertificate() {
   
   // Large "Certificate" text on left side
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(45);
+  doc.setFontSize(40);
   doc.setTextColor(0, 0, 0);
   doc.text("Certificate", 25, 48);
   doc.text("", 25, 73);
@@ -525,17 +525,31 @@ function generateCertificate() {
   
   // Recognition text box on right - properly positioned within certificate
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
+  doc.setFontSize(8);
   doc.setTextColor(80, 80, 80);
   const recognitionLines = [
     "In recognition of",
-    "your excellent completion of the",
-    "course in UI/UX Design - Introduction,",
-    "and demonstrating great",
-    "skills in practical courses."
+    "your excellent completion",
+    "of the course in"
   ];
   let yPos = 35;
   recognitionLines.forEach(line => {
+    doc.text(line, 145, yPos);
+    yPos += 5;
+  });
+  
+  // Bold course name
+  doc.setFont('helvetica', 'bold');
+  doc.text("UI/UX Design - Introduction", 145, yPos);
+  yPos += 5;
+  
+  // Continue with normal text
+  doc.setFont('helvetica', 'normal');
+  const remainingLines = [
+    "and demonstrating great",
+    "skills in practical courses."
+  ];
+  remainingLines.forEach(line => {
     doc.text(line, 145, yPos);
     yPos += 5;
   });
@@ -576,6 +590,23 @@ function generateCertificate() {
   doc.setFontSize(8);
   doc.setTextColor(160, 160, 160);
   doc.text("Elavana - By InnerWhispers", 185, 162, { align: 'right' });
+  
+  // Signature name - handwriting style
+  doc.setFont('times', 'italic');
+  doc.setFontSize(14);
+  doc.setTextColor(60, 60, 60);
+  doc.text("Gopi Kalyan", 165, 169, { align: 'center' });
+  
+  // Signature line below name
+  doc.setDrawColor(160, 160, 160);
+  doc.setLineWidth(0.3);
+  doc.line(145, 170, 185, 170);
+  
+  // Signature label
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(140, 140, 140);
+  doc.text("Authorized Signature", 165, 175, { align: 'center' });
   
   // Abstract geometric pattern at bottom - adjusted positions
   // Large purple rectangle left
